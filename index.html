@@ -104,7 +104,7 @@ td{padding:11px 9px;border-top:1px solid #edf1f6;font-size:13px;vertical-align:m
   </form>
   <form id="loginForm" class="card hidden space-y-3 p-5">
    <h1 class="text-lg font-black">Entrar a tu negocio</h1>
-   <p class="text-sm text-slate-500">El correo y la contraseña abren la licencia. Los clientes, cotizaciones y cobros quedan en esa cuenta.</p>
+   <p class="text-sm text-slate-500">Una cuenta nueva se crea con el botón de abajo. Entrar sirve solo para un correo que ya tiene cuenta. Si sigues dentro de otra, pulsa Salir antes.</p>
    <label><span class="label">Correo</span><input id="loginEmail" class="field" type="email" autocomplete="username" required></label>
    <label><span class="label">Contraseña</span><input id="loginPassword" class="field" type="password" autocomplete="current-password" minlength="8" required></label>
    <label><span class="label">Nombre del negocio</span><input id="loginBusiness" class="field" placeholder="Solo al crear la cuenta"></label>
@@ -1389,7 +1389,7 @@ $('loginForm').addEventListener('submit',async e=>{
  accessNote('Entrando…');
  const email=$('loginEmail').value.trim();
  const {data,error}=await cloudClient.auth.signInWithPassword({email,password:$('loginPassword').value});
- if(error||!data.session){accessNote('Correo o contraseña no válidos, o la cuenta todavía espera el correo de confirmación.');return}
+ if(error||!data.session){accessNote(error&&/confirm/i.test(error.message)?'Esta cuenta espera el correo de confirmación. Ábrelo y después pulsa Entrar. En el plan gratis ese correo a veces no llega.':'Ese correo todavía no tiene cuenta, o la contraseña no coincide. Para una persona nueva pulsa Crear cuenta y licencia.');return}
  try{await enterApp(email)}catch(err){accessNote(licenseText(err))}
 });
 $('loginCreate').addEventListener('click',async()=>{
@@ -1398,9 +1398,10 @@ $('loginCreate').addEventListener('click',async()=>{
  const business=($('loginBusiness').value||'').trim();
  if(!email||password.length<8||!business){accessNote('Para crear la cuenta escribe correo, una contraseña de 8 caracteres y el nombre del negocio.');return}
  accessNote('Creando la cuenta…');
- const {data,error}=await cloudClient.auth.signUp({email,password,options:{data:{display_name:business}}});
- if(error){accessNote('No se pudo crear la cuenta. Si ese correo ya existe, entra con él.');return}
- if(!data.session){accessNote('Cuenta creada. Abre el correo de confirmación y después pulsa Entrar.');return}
+ await cloudClient.auth.signOut();
+ const {data,error}=await cloudClient.auth.signUp({email,password,options:{emailRedirectTo:'https://nuneznayib9.github.io/cotizaflash-prueba/',data:{display_name:business}}});
+ if(error){accessNote(/already registered/i.test(error.message)?'Ese correo ya tiene cuenta. Pulsa Entrar.':/rate limit/i.test(error.message)?'El plan gratis ya no envía más correos por ahora. Espera un rato y vuelve a crear la cuenta.':'No se pudo crear la cuenta. Revisa el correo y la contraseña.');return}
+ if(!data.session){accessNote('Cuenta creada. Abre el correo de confirmación y después pulsa Entrar. Si el correo no llega, el plan gratis está limitando los envíos.');return}
  try{await enterApp(email)}catch(err){accessNote(licenseText(err))}
 });
 $('licenseForm').addEventListener('submit',async e=>{
