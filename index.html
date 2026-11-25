@@ -103,12 +103,13 @@ td{padding:11px 9px;border-top:1px solid #edf1f6;font-size:13px;vertical-align:m
    <button class="btn primary w-full" type="submit">Guardar conexión</button>
   </form>
   <form id="loginForm" class="card hidden space-y-3 p-5">
-   <h1 class="text-lg font-black">Entrar a tu negocio</h1>
-   <p class="text-sm text-slate-500">Cualquier correo sirve. Ese correo es la cuenta. Al crearla entran los dos días de prueba. El código la abre cuando la prueba termina.</p>
-   <label><span class="label">Correo</span><input id="loginEmail" class="field" type="email" autocomplete="username" required></label>
-   <label><span class="label">Contraseña</span><input id="loginPassword" class="field" type="password" autocomplete="current-password" minlength="8" required></label>
-   <label><span class="label">Nombre del negocio</span><input id="loginBusiness" class="field" placeholder="Solo al crear la cuenta"></label>
-   <button class="btn primary w-full" type="button" id="loginCreate">Crear mi cuenta</button>
+   <h1 class="text-lg font-black">Probar CotizaFlash</h1>
+   <p class="text-sm text-slate-500">La prueba dura 2 días y no pide correo. El código la abre cuando esos días terminan.</p>
+   <button class="btn primary w-full" type="button" id="trialEnter">Probar 2 días sin correo</button>
+   <label><span class="label">Correo</span><input id="loginEmail" class="field" type="email" autocomplete="username"></label>
+   <label><span class="label">Contraseña</span><input id="loginPassword" class="field" type="password" autocomplete="current-password" minlength="8"></label>
+   <label><span class="label">Nombre del negocio</span><input id="loginBusiness" class="field" placeholder="Solo si creas una cuenta con correo"></label>
+   <button class="btn soft w-full" type="button" id="loginCreate">Crear cuenta con correo</button>
    <button class="btn soft w-full" type="submit" id="loginEnter">Ya tengo cuenta</button>
    <button class="btn soft w-full" type="button" id="cloudChange">Cambiar la conexión del servicio</button>
   </form>
@@ -1389,8 +1390,14 @@ $('loginForm').addEventListener('submit',async e=>{
  accessNote('Entrando…');
  const email=$('loginEmail').value.trim();
  const {data,error}=await cloudClient.auth.signInWithPassword({email,password:$('loginPassword').value});
- if(error||!data.session){accessNote(error&&/confirm/i.test(error.message)?'Esta cuenta espera el correo de confirmación. Ábrelo y después pulsa Entrar. En el plan gratis ese correo a veces no llega.':'Ese correo todavía no tiene cuenta, o la contraseña no coincide. Para una persona nueva pulsa Crear cuenta y licencia.');return}
+ if(error||!data.session){accessNote(error&&/confirm/i.test(error.message)?'Esta cuenta espera el correo de confirmación. Ábrelo y después pulsa Ya tengo cuenta.':'Ese correo todavía no tiene cuenta, o la contraseña no coincide.');return}
  try{await enterApp(email)}catch(err){accessNote(licenseText(err))}
+});
+$('trialEnter').addEventListener('click',async()=>{
+ accessNote('Abriendo la prueba…');
+ const {data,error}=await cloudClient.auth.signInAnonymously();
+ if(error||!data.session){accessNote('La prueba sin correo todavía no está activada. En Supabase hay que encender Anonymous.');return}
+ try{await enterApp('Prueba')}catch(err){accessNote(licenseText(err))}
 });
 $('loginCreate').addEventListener('click',async()=>{
  const email=$('loginEmail').value.trim();
