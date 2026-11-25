@@ -1,0 +1,1434 @@
+<!doctype html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<meta name="theme-color" content="#101c35">
+<title>CotizaFlash PRO · versión consolidada</title>
+<script src="https://cdn.tailwindcss.com"></script>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<style>
+:root{--navy:#101c35;--blue:#2563eb;--muted:#64748b}
+*{box-sizing:border-box}
+html,body{max-width:100%;overflow-x:clip}
+body{font-family:Inter,ui-sans-serif,system-ui,-apple-system,"Segoe UI",sans-serif;background:#f3f6fb;color:#172033;-webkit-text-size-adjust:100%;padding-left:env(safe-area-inset-left);padding-right:env(safe-area-inset-right)}
+input,select,textarea,button{font:inherit;touch-action:manipulation}
+.field{width:100%;border:1px solid #dbe3ef;border-radius:11px;background:#fff;padding:10px 12px;outline:none;color:#172033;min-width:0}
+.field:focus{border-color:#60a5fa;box-shadow:0 0 0 3px #dbeafe}
+.label{display:block;font-size:12px;font-weight:700;color:#526078;margin:0 0 6px}
+.btn{display:inline-flex;align-items:center;justify-content:center;gap:8px;border-radius:11px;padding:10px 14px;font-weight:700;font-size:14px;transition:.15s;cursor:pointer}
+.btn:disabled{opacity:.45;cursor:not-allowed}
+.primary{background:var(--navy);color:#fff}.primary:hover{background:#1c3158}
+.soft{background:#edf2f9;color:#24324a}.soft:hover{background:#e2eaf5}
+.green{background:#16a34a;color:white}.green:hover{background:#15803d}
+.danger{color:#dc2626;background:#fff1f2}.danger:hover{background:#ffe4e6}
+.navbtn{padding:10px 12px;border-radius:10px;color:#64748b;font-weight:700;font-size:13px;white-space:nowrap}
+.navbtn.active{background:#eaf1ff;color:#1d4ed8}
+.card{background:#fff;border:1px solid #e4eaf2;border-radius:17px;box-shadow:0 4px 18px #15264a08}
+.metric{background:linear-gradient(145deg,#fff,#f8faff);border:1px solid #e5ebf4;border-radius:15px;padding:16px}
+.table-wrap{overflow-x:auto}
+table{width:100%;border-collapse:collapse}
+th{font-size:11px;text-transform:uppercase;letter-spacing:.06em;color:#7b879b;text-align:left;font-weight:800;padding:11px 9px;background:#f8fafc}
+td{padding:11px 9px;border-top:1px solid #edf1f6;font-size:13px;vertical-align:middle}
+.item-grid{display:grid;grid-template-columns:minmax(130px,2fr) minmax(65px,.6fr) minmax(90px,.9fr) minmax(90px,.9fr) 36px;gap:8px;align-items:end}
+.pill{display:inline-flex;padding:4px 9px;border-radius:99px;font-size:11px;font-weight:800}
+.status-draft{background:#eef2f7;color:#475569}.status-sent{background:#dbeafe;color:#1d4ed8}.status-accepted{background:#dcfce7;color:#15803d}.status-rejected{background:#fee2e2;color:#b91c1c}.status-pending{background:#fef3c7;color:#92400e}
+.account-ok{background:#dcfce7;color:#15803d}.account-due{background:#fef3c7;color:#92400e}.account-late{background:#fee2e2;color:#b91c1c}
+.combo{position:relative}
+.suggest{position:absolute;z-index:40;left:0;right:0;top:calc(100% + 4px);max-height:16rem;overflow:auto;background:#fff;border:1px solid #e4eaf2;border-radius:12px;box-shadow:0 12px 30px #15264a18}
+.suggest button{display:block;width:100%;text-align:left;padding:8px 12px;background:transparent;border:0;border-bottom:1px solid #f1f5f9;cursor:pointer}
+.suggest button:hover,.suggest button.active{background:#f8fafc}
+.hidden{display:none!important}
+#toast{position:fixed;bottom:max(16px,env(safe-area-inset-bottom));left:50%;transform:translateX(-50%);z-index:99;background:#14213b;color:white;padding:11px 16px;border-radius:12px;box-shadow:0 10px 30px #0f172a30;font-size:13px;max-width:min(90vw,420px)}
+.app-nav{scroll-snap-type:x proximity;-webkit-overflow-scrolling:touch;scrollbar-width:none}
+.app-nav::-webkit-scrollbar{display:none}
+.app-nav .navbtn{scroll-snap-align:start;flex:0 0 auto}
+.summary-card{min-width:0}
+@media(max-width:1023px){.summary-card{position:static}}
+@media(max-width:1023px){
+ input,select,textarea{font-size:16px}
+ .btn,.navbtn{min-height:44px}
+ .responsive-table thead{display:none}
+ .responsive-table,.responsive-table tbody,.responsive-table tr,.responsive-table td{display:block;width:100%}
+ .responsive-table tr{border:1px solid #e4eaf2;border-radius:14px;margin:0 0 12px;padding:6px 4px 8px;background:#fff}
+ .responsive-table td{border:0;padding:7px 8px}
+ .responsive-table td[data-label]{display:flex;flex-wrap:wrap;align-items:center;justify-content:space-between;gap:8px}
+ .responsive-table td[data-label]::before{content:attr(data-label);flex:0 0 auto;font-size:11px;font-weight:800;letter-spacing:.04em;text-transform:uppercase;color:#7b879b}
+ .row-actions{width:100%}
+ .row-actions .btn{flex:1 1 calc(50% - 6px)}
+ .status-select{width:auto;max-width:100%;min-width:0;min-height:44px}
+ #clientList,#catalogList,#quoteHistory,#recentQuotes{overflow-wrap:anywhere}
+}
+@media(max-width:760px){
+ .item-grid{grid-template-columns:1fr 1fr}
+ .item-grid .desc-cell{grid-column:1/-1}
+ .item-grid .remove-cell{grid-column:2;justify-self:end}
+ .mobile-stack,.catalog-add{flex-direction:column;align-items:stretch}
+ .mobile-stack .btn,.catalog-add .btn,.catalog-add .field{width:100%;max-width:none}
+ .metrics .metric:last-child{grid-column:1 / -1}
+ #page-settings .btn{width:100%}
+}
+@media(max-width:380px){.item-grid{grid-template-columns:1fr}.item-grid .remove-cell{grid-column:1;justify-self:stretch}}
+@media(max-height:520px) and (orientation:landscape){
+ .app-header{padding-top:0;padding-bottom:0}
+ .app-nav-wrap{padding-top:8px}
+ main.no-print{padding-top:12px;padding-bottom:12px}
+}
+@media print{
+ @page{size:A4;margin:14mm}
+ body{background:#fff!important;color:#111827!important}
+ .no-print{display:none!important}
+ #printDocument{display:block!important}
+ #printDocument .paper{box-shadow:none!important;border:0!important;border-radius:0!important;max-width:none!important;padding:0!important}
+ #printDocument table{break-inside:auto}
+ #printDocument thead{display:table-header-group}
+ #printDocument tr,#printDocument th,#printDocument td{break-inside:avoid;page-break-inside:avoid}
+ #printDocument .print-keep{break-inside:avoid;page-break-inside:avoid}
+}
+#printDocument{display:none}
+</style>
+</head>
+<body>
+<div id="accessGate" class="fixed inset-0 z-50 overflow-auto bg-[#f3f6fb]">
+ <div class="mx-auto flex min-h-screen max-w-md flex-col justify-center px-4 py-10">
+  <div class="mb-6 flex items-center gap-3">
+   <div class="grid h-12 w-12 place-items-center rounded-xl bg-[#101c35] text-xl font-black text-blue-300">C</div>
+   <div><div class="text-xl font-black tracking-tight">CotizaFlash <span class="text-blue-600">PRO</span></div><div class="text-sm text-slate-500">Una cuenta por comprador. El mismo negocio en el teléfono, la tablet y el computador.</div></div>
+  </div>
+  <form id="cloudSetup" class="card hidden space-y-3 p-5">
+   <h1 class="text-lg font-black">Conectar el servicio</h1>
+   <p class="text-sm text-slate-500">Esta conexión es la del proyecto. Cada comprador usa después su propio correo y su licencia.</p>
+   <label><span class="label">Dirección del proyecto</span><input id="cloudUrl" class="field" inputmode="url" autocomplete="off" placeholder="https://tu-proyecto.supabase.co" required></label>
+   <label><span class="label">Clave pública</span><input id="cloudKey" class="field" autocomplete="off" placeholder="Clave anon del proyecto" required></label>
+   <button class="btn primary w-full" type="submit">Guardar conexión</button>
+  </form>
+  <form id="loginForm" class="card hidden space-y-3 p-5">
+   <h1 class="text-lg font-black">Entrar a tu negocio</h1>
+   <p class="text-sm text-slate-500">El correo y la contraseña abren la licencia. Los clientes, cotizaciones y cobros quedan en esa cuenta.</p>
+   <label><span class="label">Correo</span><input id="loginEmail" class="field" type="email" autocomplete="username" required></label>
+   <label><span class="label">Contraseña</span><input id="loginPassword" class="field" type="password" autocomplete="current-password" minlength="8" required></label>
+   <label><span class="label">Nombre del negocio</span><input id="loginBusiness" class="field" placeholder="Solo al crear la cuenta"></label>
+   <button class="btn primary w-full" type="submit" id="loginEnter">Entrar</button>
+   <button class="btn soft w-full" type="button" id="loginCreate">Crear cuenta y licencia</button>
+   <button class="btn soft w-full" type="button" id="cloudChange">Cambiar la conexión del servicio</button>
+  </form>
+  <form id="licenseForm" class="card hidden space-y-3 p-5">
+   <h1 class="text-lg font-black">Cuenta bloqueada</h1>
+   <p id="licenseExplain" class="text-sm text-slate-500">La prueba o el periodo pagado terminó. El código de acceso abre la cuenta en el teléfono, la tablet y el computador.</p>
+   <label><span class="label">Código de acceso</span><input id="licenseCode" class="field" autocomplete="off" placeholder="CF-0000-0000" required></label>
+   <button class="btn primary w-full" type="submit">Activar licencia</button>
+   <button class="btn soft w-full" type="button" id="licenseSignOut">Salir</button>
+  </form>
+  <p id="accessMessage" class="mt-4 text-sm font-semibold text-slate-600"></p>
+ </div>
+</div>
+<div id="app" class="hidden min-h-screen">
+<header class="app-header no-print sticky top-0 z-30 bg-[#101c35] text-white shadow-lg">
+ <div class="mx-auto flex max-w-7xl flex-wrap items-center justify-between gap-2 px-4 py-3">
+  <div class="flex items-center gap-3">
+   <div class="grid h-10 w-10 place-items-center rounded-xl bg-blue-400 text-xl font-black text-[#101c35]">C</div>
+   <div><div class="font-extrabold tracking-tight">CotizaFlash <span class="text-blue-300">PRO</span></div><div class="text-[10px] text-slate-400">Gestión comercial sencilla</div></div>
+  </div>
+  <div id="sessionLabel" class="hidden max-w-[14rem] truncate text-xs text-slate-300 sm:block">Cuenta activa</div>
+  <div class="flex items-center gap-2">
+   <button class="btn bg-white/10 text-white hover:bg-white/20" id="signOut" type="button">Salir</button>
+   <button class="btn bg-white/10 text-white hover:bg-white/20" id="backupTop">⇩ Respaldo</button>
+  </div>
+ </div>
+</header>
+
+<div class="app-nav-wrap no-print mx-auto max-w-7xl px-3 pt-4 sm:px-5">
+ <nav class="app-nav flex gap-1 overflow-x-auto rounded-xl border border-slate-200 bg-white p-1 shadow-sm">
+  <button class="navbtn active" data-page="dashboard">▦ Panel</button>
+  <button class="navbtn" data-page="new">＋ Nueva cotización</button>
+  <button class="navbtn" data-page="quotes">▤ Historial</button>
+  <button class="navbtn" data-page="clients">♙ Clientes</button>
+  <button class="navbtn" data-page="catalog">▧ Catálogo</button>
+  <button class="navbtn" data-page="settings">⚙ Negocio</button>
+ </nav>
+</div>
+
+<main class="no-print mx-auto max-w-7xl px-3 py-5 sm:px-5">
+<!-- DASHBOARD -->
+<section id="page-dashboard" class="page space-y-5">
+ <div class="flex flex-wrap items-end justify-between gap-3">
+  <div><p class="text-xs font-extrabold uppercase tracking-[.15em] text-blue-600">Resumen general</p><h1 class="mt-1 text-2xl font-black tracking-tight sm:text-3xl">Panel de control</h1><p class="mt-1 text-sm text-slate-500">Controla tus cotizaciones y oportunidades.</p></div>
+  <button class="btn primary" data-goto="new">＋ Crear cotización</button>
+ </div>
+ <div class="metrics grid grid-cols-2 gap-3 md:grid-cols-3 xl:grid-cols-5">
+  <div class="metric"><div class="text-xs font-bold text-slate-500">Cotizaciones</div><div id="metricQuotes" class="mt-2 text-3xl font-black">0</div><div class="mt-1 text-xs text-slate-400">Registradas</div></div>
+  <div class="metric"><div class="text-xs font-bold text-slate-500">Aceptadas</div><div id="metricAccepted" class="mt-2 text-3xl font-black text-green-600">0</div><div class="mt-1 text-xs text-slate-400">Por el cliente</div></div>
+  <div class="metric"><div class="text-xs font-bold text-slate-500">Pendientes</div><div id="metricPending" class="mt-2 text-3xl font-black text-amber-600">0</div><div class="mt-1 text-xs text-slate-400">Por responder</div></div>
+  <div class="metric"><div class="text-xs font-bold text-slate-500">Total cotizado</div><div id="metricQuotedAmount" class="mt-2 text-2xl font-black">$0.00</div><div class="mt-1 text-xs text-slate-400">Suma de todas las cotizaciones</div></div>
+  <div class="metric"><div class="text-xs font-bold text-slate-500">Total aceptado</div><div id="metricAmount" class="mt-2 text-2xl font-black">$0.00</div><div class="mt-1 text-xs text-slate-400">Suma de cotizaciones aceptadas</div></div>
+ </div>
+ <div class="grid gap-4 lg:grid-cols-[1.3fr_.7fr]">
+  <div class="card p-4 sm:p-5"><div class="mb-3 flex items-center justify-between"><h2 class="font-extrabold">Cotizaciones recientes</h2><button class="text-xs font-bold text-blue-700" data-goto="quotes">Ver historial →</button></div><div id="recentQuotes"></div></div>
+  <div class="card p-4 sm:p-5"><h2 class="font-extrabold">Accesos rápidos</h2><div class="mt-4 grid gap-2">
+   <button class="btn soft justify-start" data-goto="new">＋ Crear una cotización</button>
+   <button class="btn soft justify-start" data-goto="clients">♙ Registrar un cliente</button>
+   <button class="btn soft justify-start" data-goto="catalog">▧ Añadir producto o servicio</button>
+   <button class="btn soft justify-start" data-goto="settings">⚙ Configurar mi negocio</button>
+  </div><p class="mt-4 rounded-xl bg-blue-50 p-3 text-xs leading-relaxed text-blue-800">Consejo: realiza una copia de seguridad periódica desde el botón “Respaldo”.</p></div>
+ </div>
+</section>
+
+<!-- NEW QUOTE -->
+<section id="page-new" class="page hidden space-y-5">
+ <div class="flex flex-wrap items-end justify-between gap-3"><div><p class="text-xs font-extrabold uppercase tracking-[.15em] text-blue-600">Documento comercial</p><h1 id="formTitle" class="mt-1 text-2xl font-black">Nueva cotización</h1><p class="mt-1 text-sm text-slate-500">Busca a la persona por su nombre, escribe el producto o servicio, la cantidad, el precio y el tiempo de entrega.</p></div><div class="text-xs font-bold text-slate-500" id="quoteCode">CF-000001</div></div>
+ <form id="quoteForm" class="grid gap-5 lg:grid-cols-[minmax(0,1fr)_minmax(260px,340px)]" autocomplete="off" novalidate>
+  <div class="space-y-4">
+   <div class="card p-4 sm:p-5">
+    <h2 class="mb-4 font-extrabold">Información del cliente</h2>
+    <div class="grid gap-3 sm:grid-cols-2">
+     <label><span class="label">Buscar cliente guardado (opcional)</span><div class="combo"><input id="clientSearchQuote" class="field" name="quote-client-search" autocomplete="off" placeholder="Nombre, apellido, teléfono o identificación" role="combobox" aria-autocomplete="list" aria-expanded="false" aria-controls="clientSuggest"><input id="clientSelect" type="hidden" value=""><div id="clientSuggest" class="suggest hidden" role="listbox"></div></div></label>
+     <label><span class="label">Nombre del cliente *</span><input id="qClient" class="field" name="quote-client-name" autocomplete="off" placeholder="Nombre o empresa"></label>
+     <label><span class="label">Teléfono / WhatsApp</span><input id="qPhone" class="field" name="quote-client-phone" autocomplete="off" placeholder="09XXXXXXXX" inputmode="tel"></label>
+     <label><span class="label">Correo electrónico</span><input id="qEmail" class="field" name="quote-client-email" autocomplete="off" placeholder="cliente@correo.com" inputmode="email"></label>
+     <label><span class="label">Identificación</span><input id="qTaxId" class="field" name="quote-client-tax" autocomplete="off" placeholder="RUC o cédula"></label>
+     <label class="sm:col-span-2"><span class="label">Dirección</span><input id="qAddress" class="field" name="quote-client-address" autocomplete="off" placeholder="Dirección del cliente"></label>
+     <label><span class="label">Fecha de emisión</span><input id="qDate" class="field" name="quote-date" autocomplete="off" type="date"></label>
+     <label><span class="label">Válida hasta</span><input id="qValid" class="field" name="quote-valid" autocomplete="off" type="date"></label>
+    </div>
+   </div>
+   <div class="card p-4 sm:p-5">
+    <div class="mb-4 flex flex-wrap items-center justify-between gap-2"><h2 class="font-extrabold">2. Productos y servicios</h2><button class="btn soft" id="addLine" type="button">＋ Añadir línea</button></div>
+    <div id="quoteItems" class="space-y-3"></div>
+    <div class="catalog-add mt-4 flex flex-wrap gap-2 border-t border-slate-100 pt-4"><select id="catalogAdd" class="field max-w-sm" autocomplete="off"><option value="">Añadir desde mi catálogo…</option></select><button class="btn soft" id="addFromCatalog" type="button">Añadir seleccionado</button></div>
+   </div>
+   <div class="card p-4 sm:p-5">
+    <h2 class="mb-4 font-extrabold">3. Condiciones y observaciones</h2>
+    <div class="grid gap-3 sm:grid-cols-2">
+     <label><span class="label">Forma de pago</span><input id="qPayment" class="field" name="quote-payment" autocomplete="off" placeholder="Ej. 50% anticipo y saldo contra entrega"></label>
+     <label><span class="label">Tiempo de entrega</span><input id="qDelivery" class="field" name="quote-delivery" autocomplete="off" placeholder="Ej. 3 días laborables"></label>
+     <label class="sm:col-span-2"><span class="label">Observaciones</span><textarea id="qNotes" rows="3" class="field" name="quote-notes" autocomplete="off" placeholder="Detalles adicionales, garantías, condiciones..."></textarea></label>
+    </div>
+   </div>
+  </div>
+  <aside class="space-y-4">
+   <div class="card summary-card p-4 sm:p-5 lg:sticky lg:top-24 lg:max-h-[calc(100vh-7rem)] lg:overflow-auto">
+    <h2 class="font-extrabold">Resumen de importes</h2>
+    <div class="mt-4 space-y-3">
+     <div class="flex items-center justify-between text-sm"><span class="text-slate-500">Subtotal</span><strong id="sumSubtotal">$0.00</strong></div>
+     <div class="grid grid-cols-[1fr_90px] items-center gap-2"><label for="qDiscountMode" class="text-sm text-slate-500">Descuento</label><select id="qDiscountMode" class="field"><option value="percent">Porcentaje</option><option value="fixed">Importe fijo</option></select></div>
+     <div id="qDiscountPercentRow" class="grid grid-cols-[1fr_90px] items-center gap-2"><label for="qDiscount" class="text-sm text-slate-500">Descuento (%)</label><input id="qDiscount" class="field text-right" type="number" min="0" max="100" step=".01" value="0"></div>
+     <div id="qDiscountFixedRow" class="hidden grid grid-cols-[1fr_90px] items-center gap-2"><label for="qDiscountFixed" class="text-sm text-slate-500">Importe del descuento</label><input id="qDiscountFixed" class="field text-right" type="number" min="0" step=".01" value="0"></div>
+     <div class="flex items-center justify-between text-sm"><span class="text-slate-500">Descuento</span><strong id="sumDiscount">$0.00</strong></div>
+     <div class="grid grid-cols-[1fr_90px] items-center gap-2"><label for="qTax" id="qTaxName" class="text-sm text-slate-500">Impuesto (%)</label><input id="qTax" class="field text-right" type="text" inputmode="decimal" autocomplete="off" value="0"></div>
+     <div class="flex items-center justify-between text-sm"><span id="taxCaption" class="text-slate-500">Impuesto (0%)</span><strong id="sumTax">$0.00</strong></div>
+     <div class="flex items-center justify-between border-t-2 border-slate-900 pt-4"><span class="font-extrabold">TOTAL</span><strong id="sumTotal" class="text-2xl font-black text-blue-700">$0.00</strong></div>
+    </div>
+    <div class="mt-5 grid gap-2">
+     <button id="saveQuote" class="btn primary w-full" type="button">Guardar cotización</button>
+     <button id="printQuote" class="btn soft w-full" type="button">Imprimir / Guardar PDF</button>
+     <button id="shareQuote" class="btn green w-full" type="button">Compartir por WhatsApp</button>
+     <button id="clearQuote" class="btn danger w-full" type="button">Limpiar formulario</button>
+    </div>
+    <p class="mt-3 text-[11px] leading-relaxed text-slate-400">El PDF se genera mediante la opción “Guardar como PDF” del navegador.</p>
+   </div>
+  </aside>
+ </form>
+</section>
+
+<!-- HISTORY -->
+<section id="page-quotes" class="page hidden space-y-4">
+ <div class="flex flex-wrap items-end justify-between gap-3"><div><p class="text-xs font-extrabold uppercase tracking-[.15em] text-blue-600">Documentos guardados</p><h1 class="mt-1 text-2xl font-black">Historial de cotizaciones</h1></div><button class="btn primary" data-goto="new">＋ Nueva cotización</button></div>
+ <div class="card p-4">
+  <div class="grid gap-3 sm:grid-cols-[1fr_190px]"><input id="quoteSearch" class="field" placeholder="Buscar por número o cliente…"><select id="statusFilter" class="field"><option value="">Todos los estados</option><option value="Borrador">Borrador</option><option value="Enviada">Enviada</option><option value="Aceptada">Aceptada</option><option value="Rechazada">Rechazada</option><option value="Pendiente">Pendiente</option></select></div>
+  <div id="quoteHistory" class="mt-4"></div>
+ </div>
+</section>
+
+<!-- CLIENTS -->
+<section id="page-clients" class="page hidden space-y-4">
+ <div><p class="text-xs font-extrabold uppercase tracking-[.15em] text-blue-600">Directorio</p><h1 class="mt-1 text-2xl font-black">Clientes</h1><p class="mt-1 text-sm text-slate-500">Cada ficha tiene su propio identificador. Dos personas pueden llamarse igual. Archivar oculta la ficha del uso diario y conserva cotizaciones, cargos y abonos. Si cambias el nombre, puedes elegir si las cotizaciones históricas muestran el nombre nuevo; el número y el vínculo se conservan.</p></div>
+ <div class="grid gap-4 lg:grid-cols-[340px_1fr]">
+  <form id="clientForm" class="card space-y-3 p-4 sm:p-5">
+   <h2 class="font-extrabold">Registrar cliente</h2><input id="clientId" type="hidden">
+   <label><span class="label">Nombre / Empresa *</span><input id="clientName" class="field" required></label>
+   <label><span class="label">Apellido</span><input id="clientLastName" class="field" placeholder="Opcional, para distinguir cuentas"></label>
+   <label><span class="label">Teléfono</span><input id="clientPhone" class="field"></label>
+   <label><span class="label">Correo</span><input id="clientEmail" class="field" type="email"></label>
+   <label><span class="label">RUC / Identificación</span><input id="clientTaxId" class="field"></label>
+   <label><span class="label">Dirección</span><textarea id="clientAddress" class="field" rows="2"></textarea></label>
+   <button class="btn primary w-full" type="submit" id="clientSave">Guardar cliente</button><button class="btn soft w-full" type="button" id="clientCancel">Limpiar</button>
+   <button class="btn soft w-full" type="button" id="scanQuoteClients">Revisar clientes en cotizaciones</button>
+   <div id="quoteClientScan" class="hidden text-xs leading-relaxed text-slate-600"></div>
+  </form>
+  <div class="card p-4 sm:p-5"><div class="mb-3 flex items-center justify-between"><h2 class="font-extrabold">Mis clientes</h2><span id="clientCount" class="text-xs text-slate-400">0 clientes</span></div><div id="clientImportHint" class="mb-3 hidden"></div><input id="clientSearch" class="field mb-3" placeholder="Buscar por nombre, teléfono o identificación…"><label class="mb-3 flex items-center gap-2 text-xs font-bold text-slate-500"><input id="showArchivedClients" type="checkbox"> Mostrar clientes archivados</label><div id="clientList"></div></div>
+ </div>
+ <div class="card p-4 sm:p-5">
+  <div class="flex flex-wrap items-end justify-between gap-3">
+   <div><h2 class="font-extrabold">Cuenta individual</h2><p class="mt-1 text-sm text-slate-500">Elige una ficha por su identificador. Abrir la cuenta no crea una cotización ni una factura.</p></div>
+   <button class="btn soft" type="button" id="accountClose">Volver al directorio</button>
+  </div>
+  <label class="mt-4 block"><span class="label">Cliente registrado</span><select id="accountClientSelect" class="field"><option value="">Selecciona un cliente para abrir su cuenta</option></select></label>
+  <div id="accountPanel" class="mt-4 hidden space-y-5" data-account-id="">
+   <div class="flex flex-wrap items-start justify-between gap-3">
+    <div>
+     <h3 id="accountTitle" class="text-xl font-black"></h3>
+     <p id="accountCode" class="mt-1 text-xs font-bold text-slate-400"></p>
+     <p id="accountIdentity" class="mt-2 text-sm text-slate-600"></p>
+    </div>
+    <span id="accountStanding" class="pill status-draft">Sin calcular</span>
+   </div>
+   <div class="grid gap-3 sm:grid-cols-3">
+    <div class="metric"><div class="text-xs font-bold text-slate-500">Total facturado</div><div id="accountBilled" class="mt-2 text-xl font-black">0.00</div><div class="mt-1 text-xs text-slate-400">Solo cargos emitidos. Aceptar una cotización no factura.</div></div>
+    <div class="metric"><div class="text-xs font-bold text-slate-500">Total pagado</div><div id="accountPaid" class="mt-2 text-xl font-black">0.00</div><div class="mt-1 text-xs text-slate-400">Abonos y correcciones de pago</div></div>
+    <div class="metric"><div class="text-xs font-bold text-slate-500">Saldo pendiente</div><div id="accountBalance" class="mt-2 text-xl font-black">0.00</div><div class="mt-1 text-xs text-slate-400">Facturado menos pagado</div></div>
+   </div>
+   <div><h3 class="font-extrabold">Cotizaciones de esta cuenta</h3><p id="accountQuoteSummary" class="mt-1 text-xs text-slate-500"></p><div id="accountQuotes" class="mt-2"></div></div>
+   <div>
+    <h3 class="font-extrabold">Facturas y cargos</h3>
+    <p class="mt-1 text-xs text-slate-500">El cargo se guarda solo cuando lo registras. No se crean facturas de cotizaciones anteriores.</p>
+    <div id="accountDocs" class="mt-2"></div>
+    <form id="invoiceForm" class="mt-3 grid gap-3 border-t border-slate-100 pt-4 sm:grid-cols-2" autocomplete="off">
+     <label><span class="label">Fecha del cargo</span><input id="invDate" class="field" type="date"></label>
+     <label><span class="label">Vence</span><input id="invDue" class="field" type="date"></label>
+     <label><span class="label">Importe</span><input id="invAmount" class="field" inputmode="decimal" autocomplete="off" placeholder="0.00"></label>
+     <label><span class="label">Cotización de origen (opcional)</span><select id="invQuote" class="field"><option value="">Sin cotización vinculada</option></select></label>
+     <label class="sm:col-span-2"><span class="label">Concepto</span><input id="invConcept" class="field" autocomplete="off" placeholder="Qué se está cobrando"></label>
+     <label class="sm:col-span-2"><span class="label">Observación</span><input id="invNote" class="field" autocomplete="off" placeholder="Opcional"></label>
+     <button class="btn primary sm:col-span-2" type="submit" id="invSave">Registrar cargo</button>
+    </form>
+   </div>
+   <div><h3 class="font-extrabold">Documentos pendientes de pago</h3><div id="accountPending" class="mt-2"></div></div>
+   <div>
+    <h3 class="font-extrabold">Abonos</h3>
+    <div id="accountPayments" class="mt-2"></div>
+    <form id="paymentForm" class="mt-3 grid gap-3 border-t border-slate-100 pt-4 sm:grid-cols-2" autocomplete="off">
+     <label><span class="label">Importe del abono</span><input id="payAmount" class="field" inputmode="decimal" autocomplete="off" placeholder="0.00"></label>
+     <label><span class="label">Fecha</span><input id="payDate" class="field" type="date"></label>
+     <label><span class="label">Método</span><select id="payMethod" class="field"><option>Efectivo</option><option>Transferencia</option><option>Tarjeta</option><option>Cheque</option><option>Otro</option></select></label>
+     <label><span class="label">Aplicar a</span><select id="payInvoice" class="field"><option value="">Abono general de la cuenta</option></select></label>
+     <label><span class="label">Referencia</span><input id="payReference" class="field" autocomplete="off" placeholder="Nº de recibo o transferencia"></label>
+     <label><span class="label">Observaciones</span><input id="payNote" class="field" autocomplete="off" placeholder="Opcional"></label>
+     <button class="btn primary sm:col-span-2" type="submit" id="paySave">Registrar abono</button>
+    </form>
+   </div>
+   <div>
+    <h3 class="font-extrabold">Ajuste de un movimiento</h3>
+    <p class="mt-1 text-xs text-slate-500">El movimiento original se conserva. El ajuste queda en el historial y corrige el saldo.</p>
+    <form id="adjustForm" class="mt-3 grid gap-3 sm:grid-cols-2" autocomplete="off">
+     <label><span class="label">Fecha</span><input id="adjDate" class="field" type="date"></label>
+     <label><span class="label">Afecta a</span><select id="adjEffect" class="field"><option value="facturado">Total facturado</option><option value="pagado">Total pagado</option></select></label>
+     <label><span class="label">Sentido</span><select id="adjDir" class="field"><option value="disminuir">Disminuir</option><option value="aumentar">Aumentar</option></select></label>
+     <label><span class="label">Importe</span><input id="adjAmount" class="field" inputmode="decimal" autocomplete="off" placeholder="0.00"></label>
+     <label><span class="label">Documento (opcional)</span><select id="adjInvoice" class="field"><option value="">Ajuste de la cuenta</option></select></label>
+     <label><span class="label">Abono relacionado (opcional)</span><select id="adjPayment" class="field"><option value="">Ninguno</option></select></label>
+     <label class="sm:col-span-2"><span class="label">Motivo</span><input id="adjReason" class="field" autocomplete="off" placeholder="Por qué se corrige"></label>
+     <button class="btn soft sm:col-span-2" type="submit" id="adjSave">Registrar ajuste</button>
+    </form>
+   </div>
+   <div><h3 class="font-extrabold">Historial de movimientos</h3><div id="accountMoves" class="mt-2"></div></div>
+  </div>
+ </div>
+</section>
+
+<!-- CATALOG -->
+<section id="page-catalog" class="page hidden space-y-4">
+ <div><p class="text-xs font-extrabold uppercase tracking-[.15em] text-blue-600">Inventario básico</p><h1 class="mt-1 text-2xl font-black">Productos y servicios</h1><p class="mt-1 text-sm text-slate-500">Crea un catálogo para cotizar más rápido.</p></div>
+ <div class="grid gap-4 lg:grid-cols-[340px_1fr]">
+  <form id="catalogForm" class="card space-y-3 p-4 sm:p-5"><h2 class="font-extrabold">Añadir al catálogo</h2><input id="productId" type="hidden">
+   <label><span class="label">Descripción *</span><input id="productName" class="field" required placeholder="Producto o servicio que ofreces"></label>
+   <label><span class="label">Precio unitario *</span><input id="productPrice" class="field" type="number" min="0" step=".01" required></label>
+   <label><span class="label">Tipo</span><select id="productType" class="field"><option>Servicio</option><option>Producto</option></select></label>
+   <button class="btn primary w-full" type="submit">Guardar en catálogo</button><button class="btn soft w-full" type="button" id="productCancel">Limpiar</button>
+  </form>
+  <div class="card p-4 sm:p-5"><h2 class="mb-3 font-extrabold">Catálogo guardado</h2><input id="catalogSearch" class="field mb-3" placeholder="Buscar producto o servicio…"><div id="catalogList"></div></div>
+ </div>
+</section>
+
+<!-- SETTINGS -->
+<section id="page-settings" class="page hidden space-y-4">
+ <div><p class="text-xs font-extrabold uppercase tracking-[.15em] text-blue-600">Personalización</p><h1 class="mt-1 text-2xl font-black">Datos de mi negocio</h1><p class="mt-1 text-sm text-slate-500">Esta información aparecerá en tus cotizaciones.</p></div>
+ <div class="grid gap-4 lg:grid-cols-[1fr_300px]">
+  <form id="settingsForm" class="card grid gap-3 p-4 sm:grid-cols-2 sm:p-5">
+   <label class="sm:col-span-2"><span class="label">Nombre comercial *</span><input id="bizName" class="field" required placeholder="Nombre de tu negocio"></label>
+   <label><span class="label">RUC</span><input id="bizRuc" class="field" placeholder="RUC"></label>
+   <label><span class="label">Teléfono / WhatsApp</span><input id="bizPhone" class="field" placeholder="09XXXXXXXX"></label>
+   <label><span class="label">Correo electrónico</span><input id="bizEmail" class="field" type="email"></label>
+   <label><span class="label">Sitio web (opcional)</span><input id="bizWeb" class="field" placeholder="Opcional"></label>
+   <label class="sm:col-span-2"><span class="label">Dirección</span><textarea id="bizAddress" class="field" rows="2"></textarea></label>
+   <label><span class="label">País</span><input id="bizCountry" class="field" placeholder="País donde operas"></label>
+   <label><span class="label">Moneda</span><input id="bizCurrency" class="field" maxlength="8" placeholder="Código, por ejemplo USD"></label>
+   <label><span class="label">Nombre del impuesto</span><input id="bizTaxName" class="field" placeholder="El nombre que uses en tu país"></label>
+   <label><span class="label">Porcentaje del impuesto</span><input id="bizTax" class="field" type="number" min="0" max="100" step=".01"></label>
+   <label><span class="label">Decimales</span><input id="bizDecimals" class="field" type="number" min="0" max="4" step="1"></label>
+   <label><span class="label">Separador decimal</span><select id="bizDecimalSep" class="field"><option value=".">.</option><option value=",">,</option></select></label>
+   <label><span class="label">Separador de miles</span><select id="bizThousandSep" class="field"><option value=",">,</option><option value=".">.</option><option value=" ">espacio</option><option value="">ninguno</option></select></label>
+   <label class="sm:col-span-2"><span class="label">Logo (PNG/JPG/WEBP, máximo 1.5 MB)</span><input id="bizLogo" class="field" type="file" accept="image/png,image/jpeg,image/webp"></label>
+   <p class="sm:col-span-2 text-xs leading-relaxed text-slate-500">Estos valores los defines tú según tu país y tu actividad. CotizaFlash no asigna una tasa fiscal ni sustituye la orientación de un contador.</p>
+   <div class="sm:col-span-2 flex flex-wrap gap-2"><button class="btn primary" type="submit">Guardar datos del negocio</button><button class="btn soft" type="button" id="removeLogo">Quitar logo</button></div>
+  </form>
+  <div class="card p-5"><h2 class="font-extrabold">Vista de identidad</h2><div class="mt-5 flex min-h-36 flex-col items-center justify-center rounded-xl border border-dashed border-slate-300 bg-slate-50 p-4 text-center"><img id="logoPreview" class="mb-3 hidden max-h-20 max-w-40 object-contain"><div id="logoFallback" class="mb-3 grid h-14 w-14 place-items-center rounded-xl bg-blue-100 text-xl font-black text-blue-700">CF</div><div id="bizPreviewName" class="font-extrabold">Tu negocio</div><div id="bizPreviewInfo" class="mt-1 text-xs text-slate-500"></div></div>
+   <div class="mt-5 rounded-xl bg-amber-50 p-3 text-xs leading-relaxed text-amber-900"><strong>Importante:</strong> con la cuenta activa, el negocio se guarda en el servicio y se abre en el teléfono, la tablet y el computador. El respaldo JSON sigue siendo tu copia privada.</div>
+  </div>
+ </div>
+ <div class="card p-4 sm:p-5"><h2 class="font-extrabold">Copia de seguridad</h2><p class="mt-1 text-sm text-slate-500">La cuenta guarda el negocio en el servicio. Este respaldo es una copia privada por si quieres guardarla aparte.</p><p class="mt-2 text-xs leading-relaxed text-slate-500">Cada comprador entra con su correo. La licencia activa es la que abre esos datos en cualquier aparato. Un correo distinto no ve el negocio de otro.</p><div class="mt-3 flex flex-wrap gap-2"><button id="backupBtn" class="btn primary" type="button">⇩ Descargar respaldo JSON</button><label class="btn soft cursor-pointer">⇧ Restaurar respaldo<input id="restoreInput" type="file" accept="application/json,.json" class="hidden"></label><button id="emptyBase" class="btn danger" type="button">Vaciar datos de prueba</button></div><p class="mt-2 text-xs leading-relaxed text-slate-500">Vaciar deja este equipo sin clientes, cotizaciones, catálogo ni datos del negocio. Quien compre la aplicación llena sus propios productos, precios, cantidades y las personas a las que cotiza.</p></div>
+</section>
+</main>
+
+<!-- PRINT DOCUMENT -->
+<div id="printDocument">
+ <div class="paper mx-auto max-w-3xl rounded-xl bg-white p-10 shadow">
+  <div class="print-keep flex items-start justify-between gap-5 border-b-2 border-slate-900 pb-6">
+   <div><img id="pLogo" class="mb-3 hidden max-h-16 max-w-36 object-contain"><h1 id="pBiz" class="text-2xl font-black">Tu negocio</h1><div id="pBizDetails" class="mt-1 whitespace-pre-line text-xs leading-relaxed text-slate-500"></div></div>
+   <div class="text-right"><div class="text-xs font-bold uppercase tracking-widest text-blue-700">Cotización</div><div id="pCode" class="mt-1 text-xl font-black"></div><div id="pDate" class="mt-1 text-sm text-slate-500"></div></div>
+  </div>
+  <div class="print-keep my-7 grid grid-cols-2 gap-5 text-sm"><div><div class="text-[10px] font-bold uppercase tracking-widest text-slate-400">Preparada para</div><div id="pClient" class="mt-1 font-bold"></div><div id="pClientDetails" class="mt-1 whitespace-pre-line text-xs text-slate-500"></div></div><div class="text-right"><div class="text-[10px] font-bold uppercase tracking-widest text-slate-400">Válida hasta</div><div id="pValid" class="mt-1 font-semibold"></div></div></div>
+  <table class="w-full text-sm"><thead><tr><th>Descripción</th><th class="text-right">Cant.</th><th class="text-right">P. unitario</th><th class="text-right">Importe</th></tr></thead><tbody id="pRows"></tbody></table>
+  <div class="print-keep ml-auto mt-6 w-full max-w-xs space-y-2 text-sm"><div class="flex justify-between"><span>Subtotal</span><b id="pSubtotal"></b></div><div class="flex justify-between"><span>Descuento</span><b id="pDiscount"></b></div><div class="flex justify-between"><span id="pTaxLabel">IVA</span><b id="pTax"></b></div><div class="flex justify-between border-t-2 border-slate-900 pt-3 text-lg font-black"><span>TOTAL</span><span id="pTotal"></span></div></div>
+  <div class="mt-9 space-y-2 text-xs"><div id="pPaymentLine"></div><div id="pDeliveryLine"></div><div id="pNotesLine" class="whitespace-pre-line"></div></div>
+  <div class="print-keep mt-12 border-t border-slate-200 pt-4 text-center text-xs text-slate-400">Gracias por confiar en nosotros.</div>
+ </div>
+</div>
+<div id="toast" class="no-print hidden"></div>
+
+<script>
+(() => {
+'use strict';
+const $=id=>document.getElementById(id), KEY='cotizaflash_pro_data_v1';
+const MAX_MINOR=9007199254740991n;
+function currencyDecimals(){const n=Number(db?.business?.decimals);return Math.min(4,Math.max(0,Number.isFinite(n)?Math.round(n):2))}
+function decimalText(value){
+ if(typeof value==='number'){if(!Number.isFinite(value))return null;const s=Object.is(value,-0)?'0':JSON.stringify(value);return /e/i.test(s)?null:s}
+ let s=String(value??'').trim().replace(/\s/g,'');
+ if(!s)return '0';
+ s=s.replace(',','.');
+ return /^[+-]?\d+(\.\d+)?$/.test(s)?s:null;
+}
+function parseScaled(value,scale){
+ const text=decimalText(value);
+ if(text==null)return null;
+ let neg=false,raw=text;
+ if(raw[0]==='+')raw=raw.slice(1);
+ if(raw[0]==='-'){neg=true;raw=raw.slice(1)}
+ if(!/^\d+(\.\d+)?$/.test(raw))return null;
+ let [whole,frac='']=raw.split('.');
+ if(whole.length>15)return null;
+ const probe=(frac+'0'.repeat(scale+1)).slice(0,scale+1);
+ let minor;
+ try{minor=BigInt((whole||'0')+probe.slice(0,scale))}catch(e){return null}
+ if(probe[scale]>='5')minor+=1n;
+ if(minor>MAX_MINOR)return null;
+ return neg?-minor:minor;
+}
+function fitsMinor(n){return typeof n==='bigint'&&n<=MAX_MINOR&&n>=-MAX_MINOR}
+function divRound(n,d){const neg=n<0n;const a=neg?-n:n;const q=a/d;const r=a%d;const out=r*2n>=d?q+1n:q;return neg?-out:out}
+function formatMinor(minor,decimals=currencyDecimals()){
+ const b=db?.business||{};
+ const dec=b.decimalSep===','?',':'.';
+ let thou=b.thousandSep??',';
+ if(thou==='none'||thou==='ninguno')thou='';
+ if(thou===dec)thou=dec===','?'.':',';
+ const neg=minor<0n;
+ const body=(neg?-minor:minor).toString().padStart(decimals+1,'0');
+ let whole=decimals?body.slice(0,-decimals):body;
+ const frac=decimals?body.slice(-decimals):'';
+ if(thou)whole=whole.replace(/\B(?=(\d{3})+(?!\d))/g,thou);
+ const num=decimals?whole+dec+frac:whole;
+ const currency=String(b.currency||'').trim();
+ return (currency?currency+' ':'')+(neg?'-':'')+num;
+}
+function money(n){const minor=parseScaled(n,currencyDecimals());return minor==null?'—':formatMinor(minor)}
+function lineMinor(qty,price,decimals){
+ const q=parseScaled(qty,6),p=parseScaled(price,6);
+ if(q==null||p==null)return null;
+ const rounded=divRound(q*p,10n**BigInt(12-decimals));
+ return fitsMinor(rounded)?rounded:null;
+}
+function percentOf(minor,percent){
+ const p=parseScaled(Math.min(100,Math.max(0,Number(percent)||0)),4);
+ if(p==null)return null;
+ const out=divRound(minor*p,1000000n);
+ return fitsMinor(out)?out:null;
+}
+const today=()=>{const d=new Date();return new Date(d.getTime()-d.getTimezoneOffset()*60000).toISOString().slice(0,10)};
+const uid=()=>Date.now().toString(36)+Math.random().toString(36).slice(2,7);
+const esc=s=>String(s??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+const blank=()=>({business:{name:'',ruc:'',phone:'',email:'',web:'',address:'',country:'',currency:'',taxName:'',tax:0,decimals:2,decimalSep:'.',thousandSep:',',logo:''},clients:[],catalog:[],quotes:[],payments:[],invoices:[],adjustments:[],nextQuote:1,nextInvoice:1});
+let db=loadDB(),draftItems=[],editingQuoteId=null,toastTimer,pendingClientImport=[],linkedClientId='',fillingQuote=false,openAccountId='',suggestIndex=-1,ledgerLock=false;
+function loadDB(){try{const d=JSON.parse(localStorage.getItem(KEY)||'null');if(d&&d.business&&Array.isArray(d.quotes)){const next={...blank(),...d,business:{...blank().business,...d.business}};['clients','catalog','quotes','payments','invoices','adjustments'].forEach(k=>{if(!Array.isArray(next[k]))next[k]=[]});return next}}catch(e){}return blank()}
+function persist(){try{localStorage.setItem(KEY,JSON.stringify(db))}catch(e){notify('No se pudo guardar. El almacenamiento podría estar lleno.');return false}scheduleCloudSave();return true}
+function notify(msg){const t=$('toast');t.textContent=msg;t.classList.remove('hidden');clearTimeout(toastTimer);toastTimer=setTimeout(()=>t.classList.add('hidden'),2600)}
+function go(page){document.querySelectorAll('.page').forEach(p=>p.classList.add('hidden'));$('page-'+page).classList.remove('hidden');document.querySelectorAll('.navbtn').forEach(b=>b.classList.toggle('active',b.dataset.page===page));if(page==='dashboard')renderDashboard();if(page==='quotes')renderHistory();if(page==='clients')renderClients();if(page==='catalog')renderCatalog();if(page==='settings')renderSettings();window.scrollTo({top:0,behavior:'smooth'})}
+document.querySelectorAll('[data-page]').forEach(b=>b.addEventListener('click',()=>{if(b.dataset.page==='new')beginNewQuote();else go(b.dataset.page)}));
+document.querySelectorAll('[data-goto]').forEach(b=>b.addEventListener('click',()=>{if(b.dataset.goto==='new')beginNewQuote();else go(b.dataset.goto)}));
+
+function quoteNumber(code){const m=String(code||'').match(/(\d+)\s*$/);return m?parseInt(m[1],10):0}
+function selectedClientId(){
+ return linkedClientId&&db.clients.some(c=>c.id===linkedClientId)?linkedClientId:'';
+}
+function nextCodeFrom(){
+ const used=new Set();
+ let n=0;
+ db.quotes.forEach(q=>{
+  const code=String(q&&q.code||'');
+  if(code)used.add(code);
+  n=Math.max(n,quoteNumber(code));
+ });
+ const counter=Number(db.nextQuote);
+ if(Number.isFinite(counter)&&counter-1>n)n=counter-1;
+ let code='';
+ do{n+=1;code='CF-'+String(n).padStart(6,'0')}while(used.has(code));
+ return code;
+}
+function nextCodeFor(){return nextCodeFrom()}
+function codeForQuote(clientId,clientName,existingId){
+ if(existingId){const existing=db.quotes.find(q=>q.id===existingId);return existing?.code||''}
+ if(!normClient(clientName))return '';
+ return nextCodeFrom();
+}
+function rememberCounter(code){const n=quoteNumber(code)+1;if(!Number.isFinite(Number(db.nextQuote))||Number(db.nextQuote)<n)db.nextQuote=n}
+function refreshQuoteCode(){const clientId=selectedClientId(),name=$('qClient').value;if(editingQuoteId){const code=codeForQuote(clientId,name,editingQuoteId);$('quoteCode').textContent=code||'Número en uso para este cliente';return}const code=nextCodeFor(clientId,name);$('quoteCode').textContent=normClient(name)?code:'Se asigna al guardar'}
+function taxTitle(percent,name){const label=String(name||db.business.taxName||'Impuesto').trim()||'Impuesto';return `${label} (${Number(percent)||0}%)`}
+function statusClass(s){return {'Borrador':'status-draft','Enviada':'status-sent','Aceptada':'status-accepted','Rechazada':'status-rejected','Pendiente':'status-pending'}[s]||'status-draft'}
+function quoteMath(q){
+ const decimals=currencyDecimals();
+ const lines=[];
+ let sub=0n;
+ for(const item of (q.items||[])){
+  const line=lineMinor(item.qty,item.price,decimals);
+  if(line==null)return {overflow:true};
+  lines.push(line);
+  sub+=line;
+  if(!fitsMinor(sub))return {overflow:true};
+ }
+ const mode=q.discountMode==='fixed'?'fixed':'percent';
+ let requested;
+ if(mode==='fixed'){
+  requested=parseScaled(q.discountFixed||0,decimals);
+  if(requested==null)return {overflow:true};
+  if(requested<0n)requested=0n;
+ }else requested=percentOf(sub,q.discount);
+ if(requested==null)return {overflow:true};
+ const over=requested>sub;
+ const disc=over?sub:requested;
+ const base=sub-disc;
+ const tax=percentOf(base,q.tax);
+ if(tax==null||!fitsMinor(base+tax))return {overflow:true};
+ return {overflow:false,over,lines,sub,disc,tax,total:base+tax};
+}
+function shownTotal(q){const t=quoteMath(q);return t.overflow?'—':formatMinor(t.total)}
+function sumShown(list){let acc=0n;for(const q of list){const t=quoteMath(q);if(t.overflow||!fitsMinor(acc+t.total))return null;acc+=t.total}return acc}
+function renderDashboard(){
+ $('metricQuotes').textContent=db.quotes.length;
+ $('metricAccepted').textContent=db.quotes.filter(q=>q.status==='Aceptada').length;
+ $('metricPending').textContent=db.quotes.filter(q=>['Pendiente','Enviada'].includes(q.status)).length;
+ const quoted=sumShown(db.quotes),accepted=sumShown(db.quotes.filter(q=>q.status==='Aceptada'));
+ $('metricQuotedAmount').textContent=quoted==null?'—':formatMinor(quoted);
+ $('metricAmount').textContent=accepted==null?'—':formatMinor(accepted);
+ const recent=[...db.quotes].sort((a,b)=>b.createdAt-a.createdAt).slice(0,6);
+ $('recentQuotes').innerHTML=recent.length?`<div class="table-wrap"><table class="responsive-table"><thead><tr><th>Número</th><th>Cliente</th><th>Total</th><th>Estado</th></tr></thead><tbody>${recent.map(q=>`<tr><td data-label="Número" class="font-bold">${esc(q.code)}</td><td data-label="Cliente">${esc(q.client||'—')}</td><td data-label="Total" class="font-bold">${shownTotal(q)}</td><td data-label="Estado"><span class="pill ${statusClass(q.status)}">${esc(q.status)}</span></td></tr>`).join('')}</tbody></table></div>`:'<div class="rounded-xl bg-slate-50 p-8 text-center text-sm text-slate-400">Todavía no tienes cotizaciones. Crea la primera para comenzar.</div>';
+}
+function populateClientSelect(){const id=selectedClientId();const c=id?db.clients.find(x=>x.id===id):null;const was=fillingQuote;fillingQuote=true;$('clientSelect').value=id||'';$('clientSearchQuote').value=c?clientPickerLabel(c):'';closeClientSuggest();fillingQuote=was}
+function populateCatalogSelect(){const sel=$('catalogAdd');sel.innerHTML='<option value="">Añadir desde mi catálogo…</option>'+db.catalog.map(p=>`<option value="${esc(p.id)}">${esc(p.name)} · ${money(p.price)}</option>`).join('')}
+function unlockQuoteFields(){document.querySelectorAll('#page-new input, #page-new textarea, #page-new select').forEach(el=>{el.disabled=false;el.removeAttribute('disabled');if('readOnly' in el){el.readOnly=false;el.removeAttribute('readonly')}})}
+function resetQuoteForm(){
+ editingQuoteId=null;linkedClientId='';draftItems=[{id:uid(),desc:'',qty:1,price:0}];$('formTitle').textContent='Nueva cotización';
+ fillingQuote=true;
+ ['qClient','qPhone','qEmail','qTaxId','qAddress','qNotes','qPayment','qDelivery'].forEach(id=>$(id).value='');
+ $('qDate').value=today();const v=new Date();v.setDate(v.getDate()+15);$('qValid').value=new Date(v.getTime()-v.getTimezoneOffset()*60000).toISOString().slice(0,10);
+ $('qTax').value=Number(db.business.tax??0);$('qDiscountMode').value='percent';$('qDiscount').value=0;$('qDiscountFixed').value=0;syncDiscountMode();
+ fillingQuote=false;
+ populateClientSelect();populateCatalogSelect();unlockQuoteFields();refreshQuoteCode();renderDraftItems();calcDraft();
+}
+function beginNewQuote(){resetQuoteForm();go('new')}
+function renderDraftItems(){
+ $('quoteItems').innerHTML=draftItems.map((it,i)=>`<div class="rounded-xl border border-slate-200 bg-slate-50/70 p-3"><div class="mb-2 flex items-center justify-between"><span class="text-[11px] font-extrabold uppercase tracking-wider text-slate-400">Línea ${i+1}</span><button type="button" class="text-xs font-bold text-red-600" data-remove-line="${it.id}">Eliminar ×</button></div><div class="item-grid"><label class="desc-cell"><span class="label">Descripción</span><input class="field" data-prop="desc" data-id="${it.id}" value="${esc(it.desc)}" placeholder="Producto o servicio"></label><label class="qty-cell"><span class="label">Cantidad</span><input class="field" type="number" min=".01" step=".01" data-prop="qty" data-id="${it.id}" value="${it.qty}"></label><label class="price-cell"><span class="label">Precio unitario</span><input class="field" type="number" min="0" step=".01" data-prop="price" data-id="${it.id}" value="${it.price}"></label><div class="sum-cell"><span class="label">Importe</span><div class="field bg-slate-100 font-bold" data-line-total="${it.id}">${money(it.qty*it.price)}</div></div><div class="remove-cell"></div></div></div>`).join('');
+ $('quoteItems').querySelectorAll('[data-prop]').forEach(el=>el.addEventListener('input',()=>{const it=draftItems.find(x=>x.id===el.dataset.id);if(!it)return;it[el.dataset.prop]=el.dataset.prop==='desc'?el.value:Math.max(0,Number(el.value)||0);calcDraft()}));
+ $('quoteItems').querySelectorAll('[data-remove-line]').forEach(b=>b.addEventListener('click',()=>{if(draftItems.length===1){draftItems[0]={id:uid(),desc:'',qty:1,price:0}}else draftItems=draftItems.filter(x=>x.id!==b.dataset.removeLine);renderDraftItems();calcDraft()}));
+}
+function syncDiscountMode(){const fixed=$('qDiscountMode').value==='fixed';$('qDiscountPercentRow').classList.toggle('hidden',fixed);$('qDiscountFixedRow').classList.toggle('hidden',!fixed)}
+function draftAdjustments(){const mode=$('qDiscountMode').value==='fixed'?'fixed':'percent';return {discountMode:mode,discount:mode==='percent'?$('qDiscount').value:0,discountFixed:mode==='fixed'?$('qDiscountFixed').value:0,tax:$('qTax').value}}
+function calcDraft(){
+ const t=quoteMath({items:draftItems,...draftAdjustments()});
+ $('quoteItems').querySelectorAll('[data-line-total]').forEach(el=>{const i=draftItems.findIndex(x=>String(x.id)===String(el.dataset.lineTotal));el.textContent=t.overflow||i<0?'—':formatMinor(t.lines[i])});
+ if(t.overflow){$('sumSubtotal').textContent='—';$('sumDiscount').textContent='—';$('sumTax').textContent='—';$('sumTotal').textContent='—';return}
+ $('sumSubtotal').textContent=formatMinor(t.sub);$('sumDiscount').textContent='− '+formatMinor(t.disc);const caption=taxTitle($('qTax').value);$('taxCaption').textContent=caption;$('qTaxName').textContent=caption.replace(/\s*\(.*\)$/,'')+' (%)';$('sumTax').textContent=formatMinor(t.tax);$('sumTotal').textContent=formatMinor(t.total);
+}
+$('addLine').addEventListener('click',()=>{draftItems.push({id:uid(),desc:'',qty:1,price:0});renderDraftItems();calcDraft()});
+function onDiscountMode(){if($('qDiscountMode').value==='fixed')$('qDiscount').value=0;else $('qDiscountFixed').value=0;syncDiscountMode();calcDraft()}
+$('qDiscountMode').addEventListener('change',onDiscountMode);
+['qDiscount','qDiscountFixed','qTax'].forEach(id=>$(id).addEventListener('input',calcDraft));
+$('qTax').addEventListener('focus',function(){this.select()});
+function unlinkSavedClient(){
+ if(fillingQuote||!linkedClientId)return;
+ linkedClientId='';
+ fillingQuote=true;
+ $('clientSelect').value='';
+ $('clientSearchQuote').value='';
+ closeClientSuggest();
+ fillingQuote=false;
+ refreshQuoteCode();
+}
+function applySavedClient(id){
+ const c=db.clients.find(x=>x.id===id);
+ if(!c||c.active===false){linkedClientId='';return}
+ fillingQuote=true;
+ linkedClientId=c.id;
+ $('clientSelect').value=c.id;
+ $('clientSearchQuote').value=clientPickerLabel(c);
+ $('qClient').value=[c.name,c.lastName].filter(Boolean).join(' ');
+ $('qPhone').value=c.phone||'';
+ $('qEmail').value=c.email||'';
+ $('qTaxId').value=c.taxId||'';
+ $('qAddress').value=c.address||'';
+ fillingQuote=false;
+ closeClientSuggest();
+ unlockQuoteFields();
+ refreshQuoteCode();
+ notify('Datos del cliente cargados. Puedes modificarlos libremente.');
+}
+function closeClientSuggest(){
+ const box=$('clientSuggest');
+ if(!box)return;
+ box.classList.add('hidden');
+ box.innerHTML='';
+ $('clientSearchQuote').setAttribute('aria-expanded','false');
+ suggestIndex=-1;
+}
+function renderClientSuggest(raw){
+ const term=normClient(raw);
+ if(!term){closeClientSuggest();return}
+ const list=db.clients.filter(c=>c&&c.active!==false&&normClient([c.name,c.lastName,c.phone,c.email,c.taxId,c.address,clientCode(c),c.id].join(' ')).includes(term)).sort((a,b)=>String(a.name||'').localeCompare(String(b.name||''),'es',{sensitivity:'base'})).slice(0,30);
+ const box=$('clientSuggest');
+ suggestIndex=-1;
+ if(!list.length){
+  box.innerHTML='<div class="px-3 py-2 text-xs text-slate-500">Ningún cliente coincide. Los datos de abajo se escriben a mano y no se mezclan con otra cuenta.</div>';
+  box.classList.remove('hidden');
+  $('clientSearchQuote').setAttribute('aria-expanded','true');
+  return;
+ }
+ box.innerHTML=list.map(c=>`<button type="button" role="option" data-pick="${esc(c.id)}"><div class="text-sm font-bold">${esc([c.name,c.lastName].filter(Boolean).join(' '))}</div><div class="text-[11px] text-slate-500">${esc([c.taxId?('ID '+c.taxId):'Sin identificación',c.phone||'Sin teléfono',clientCode(c)].filter(Boolean).join(' · '))}</div></button>`).join('');
+ box.classList.remove('hidden');
+ $('clientSearchQuote').setAttribute('aria-expanded','true');
+ box.querySelectorAll('[data-pick]').forEach(b=>b.addEventListener('mousedown',ev=>{ev.preventDefault();applySavedClient(b.dataset.pick)}));
+}
+function moveClientSuggest(delta){
+ const items=[...$('clientSuggest').querySelectorAll('[data-pick]')];
+ if(!items.length)return;
+ suggestIndex=Math.max(0,Math.min(items.length-1,suggestIndex<0?0:suggestIndex+delta));
+ items.forEach((el,i)=>el.classList.toggle('active',i===suggestIndex));
+ items[suggestIndex].scrollIntoView({block:'nearest'});
+}
+$('quoteForm').addEventListener('submit',event=>event.preventDefault());
+$('clientSearchQuote').addEventListener('input',()=>{
+ if(fillingQuote)return;
+ if(linkedClientId){linkedClientId='';$('clientSelect').value='';refreshQuoteCode()}
+ renderClientSuggest($('clientSearchQuote').value);
+});
+$('clientSearchQuote').addEventListener('focus',()=>{if(!fillingQuote&&normClient($('clientSearchQuote').value))renderClientSuggest($('clientSearchQuote').value)});
+$('clientSearchQuote').addEventListener('blur',()=>setTimeout(closeClientSuggest,160));
+$('clientSearchQuote').addEventListener('keydown',event=>{
+ if(event.key==='ArrowDown'){event.preventDefault();if($('clientSuggest').classList.contains('hidden'))renderClientSuggest($('clientSearchQuote').value);moveClientSuggest(1)}
+ else if(event.key==='ArrowUp'){event.preventDefault();moveClientSuggest(-1)}
+ else if(event.key==='Escape')closeClientSuggest();
+ else if(event.key==='Enter'){
+  const items=[...$('clientSuggest').querySelectorAll('[data-pick]')];
+  if(!items.length||$('clientSuggest').classList.contains('hidden'))return;
+  event.preventDefault();
+  const pick=items[suggestIndex>=0?suggestIndex:0];
+  if(pick)applySavedClient(pick.dataset.pick);
+ }
+});
+['qClient','qPhone','qEmail','qTaxId','qAddress'].forEach(id=>{
+ $(id).addEventListener('input',unlinkSavedClient);
+ $(id).addEventListener('change',unlinkSavedClient);
+});
+$('qClient').addEventListener('input',refreshQuoteCode);
+$('addFromCatalog').addEventListener('click',()=>{const p=db.catalog.find(x=>x.id===$('catalogAdd').value);if(!p){notify('Selecciona un producto del catálogo.');return}draftItems.push({id:uid(),desc:p.name,qty:1,price:p.price});renderDraftItems();calcDraft()});
+function emailOk(value){const s=String(value||'').trim();if(!s)return true;return s.length<=254&&/^[A-Za-z0-9._%+-]+@[A-Za-z0-9.-]+\.[A-Za-z]{2,}$/.test(s)}
+function currentQuote(){const existing=editingQuoteId?db.quotes.find(q=>q.id===editingQuoteId):null;const adj=draftAdjustments();const clientId=selectedClientId();return {id:editingQuoteId||uid(),code:codeForQuote(clientId,$('qClient').value.trim(),editingQuoteId),clientId,client:$('qClient').value.trim(),phone:$('qPhone').value.trim(),email:$('qEmail').value.trim(),taxId:$('qTaxId').value.trim(),address:$('qAddress').value.trim(),date:$('qDate').value,valid:$('qValid').value,payment:$('qPayment').value.trim(),delivery:$('qDelivery').value.trim(),notes:$('qNotes').value.trim(),discount:Math.min(100,Math.max(0,Number(adj.discount)||0)),discountFixed:Math.max(0,Number(adj.discountFixed)||0),discountMode:adj.discountMode,tax:Math.min(100,Math.max(0,Number($('qTax').value)||0)),taxName:existing?.taxName||String(db.business.taxName||'Impuesto').trim()||'Impuesto',items:draftItems.map(x=>({desc:x.desc.trim(),qty:Math.max(0,Number(x.qty)||0),price:Math.max(0,Number(x.price)||0)})),status:existing?.status||'Borrador',createdAt:existing?.createdAt||Date.now()}}
+function validateQuote(q){if(!q.client){notify('Escribe el nombre del cliente.');$('qClient').focus();return false}if(!emailOk(q.email)){notify('El correo no es válido. Revísalo o déjalo vacío.');$('qEmail').focus();return false}if(!q.code){notify('No se pudo asignar un número de cotización.');refreshQuoteCode();return false}if(!editingQuoteId&&db.quotes.some(x=>x.id!==q.id&&String(x.code)===String(q.code))){notify('Ese número ya existe. No se guardó para evitar un duplicado.');refreshQuoteCode();return false}if(!q.items.some(x=>x.desc&&x.qty>0)){notify('Añade al menos un producto o servicio con cantidad.');return false}const t=quoteMath(q);if(t.overflow){notify('Hay un importe demasiado grande para calcularlo con seguridad.');return false}if(t.over){notify('El descuento no puede superar el subtotal.');$('qDiscountFixed').focus();return false}return true}
+function saveQuote(){
+ const q=currentQuote();
+ if(!validateQuote(q))return;
+ const previous=JSON.stringify(db);
+ const i=db.quotes.findIndex(x=>x.id===q.id);
+ if(i>=0)db.quotes[i]=q;
+ else db.quotes.push(q);
+ rememberCounter(q.code);
+ if(!persist()){
+   db=JSON.parse(previous);
+   notify('No se pudo guardar la cotización. Tus datos anteriores se conservaron.');
+   return;
+ }
+ editingQuoteId=q.id;
+ $('formTitle').textContent='Editar cotización';
+ $('quoteCode').textContent=q.code;
+ notify('Cotización guardada correctamente.');
+ renderDashboard();
+ renderHistory();
+}
+$('saveQuote').addEventListener('click',saveQuote);
+$('clearQuote').addEventListener('click',()=>{if(confirm('¿Limpiar el formulario actual?'))resetQuoteForm()});
+function loadQuote(q){
+ editingQuoteId=q.id;
+ draftItems=q.items.map(x=>({...x,id:uid()}));
+ $('formTitle').textContent='Editar cotización';
+ $('quoteCode').textContent=q.code;
+ linkedClientId=q.clientId&&db.clients.some(c=>c.id===q.clientId)?q.clientId:'';
+ fillingQuote=true;
+ populateClientSelect();
+ populateCatalogSelect();
+ const map={qClient:q.client,qPhone:q.phone,qEmail:q.email,qTaxId:q.taxId,qAddress:q.address,qDate:q.date,qValid:q.valid,qPayment:q.payment,qDelivery:q.delivery,qNotes:q.notes,qDiscount:q.discount,qTax:q.tax};
+ ['qClient','qPhone','qEmail','qTaxId','qAddress','qDate','qValid','qPayment','qDelivery','qNotes','qDiscount','qTax'].forEach(id=>{$(id).value=map[id]??''});
+ fillingQuote=false;
+ $('qDiscountMode').value=q.discountMode==='fixed'?'fixed':'percent';
+ $('qDiscountFixed').value=q.discountFixed||0;
+ if($('qDiscountMode').value==='fixed')$('qDiscount').value=0;
+ syncDiscountMode();
+ unlockQuoteFields();
+ renderDraftItems();
+ calcDraft();
+ go('new');
+}
+function printData(q){
+ const t=quoteMath(q);
+ if(t.overflow){notify('Hay un importe demasiado grande para imprimirlo con seguridad.');return}
+ const b=db.business;$('pBiz').textContent=b.name||'Mi negocio';$('pBizDetails').textContent=[b.ruc?'RUC: '+b.ruc:'',b.phone?'Tel.: '+b.phone:'',b.email||'',b.address||'',b.web||''].filter(Boolean).join('\n');
+ if(b.logo){$('pLogo').src=b.logo;$('pLogo').classList.remove('hidden')}else $('pLogo').classList.add('hidden');
+ $('pCode').textContent=q.code;$('pDate').textContent='Fecha: '+(q.date||'—');$('pClient').textContent=q.client;$('pClientDetails').textContent=[q.taxId?'ID: '+q.taxId:'',q.phone?'Tel.: '+q.phone:'',q.email||'',q.address||''].filter(Boolean).join('\n');$('pValid').textContent=q.valid||'—';
+ $('pRows').innerHTML=q.items.map((x,i)=>`<tr><td>${esc(x.desc)}</td><td class="text-right">${esc(x.qty)}</td><td class="text-right">${money(x.price)}</td><td class="text-right font-semibold">${formatMinor(t.lines[i])}</td></tr>`).join('');
+ $('pSubtotal').textContent=formatMinor(t.sub);$('pDiscount').textContent='− '+formatMinor(t.disc);$('pTaxLabel').textContent=taxTitle(q.tax,q.taxName);$('pTax').textContent=formatMinor(t.tax);$('pTotal').textContent=formatMinor(t.total);
+ $('pPaymentLine').textContent=q.payment?'Forma de pago: '+q.payment:'';$('pDeliveryLine').textContent=q.delivery?'Tiempo de entrega: '+q.delivery:'';$('pNotesLine').textContent=q.notes?'Observaciones: '+q.notes:'';
+ $('printDocument').style.display='block';
+ const hide=()=>{$('printDocument').style.display='none';window.removeEventListener('afterprint',hide)};
+ window.addEventListener('afterprint',hide);
+ window.print();
+}
+$('printQuote').addEventListener('click',()=>{const q=currentQuote();if(validateQuote(q))printData(q)});
+function shareQuote(q){const t=quoteMath(q);if(t.overflow){notify('Hay un importe demasiado grande para compartirlo con seguridad.');return}const b=db.business;const msg=[`*COTIZACIÓN ${q.code}*`,`*${b.name||'Mi negocio'}*`,b.phone?'Teléfono: '+b.phone:'',`Cliente: ${q.client}`,q.taxId?'Identificación: '+q.taxId:'',q.address?'Dirección: '+q.address:'',`Fecha: ${q.date||'—'}`,q.valid?'Válida hasta: '+q.valid:'','','*DETALLE*',...q.items.map((x,i)=>`${i+1}. ${x.desc} | ${x.qty} x ${money(x.price)} = ${formatMinor(t.lines[i])}`),'',`Subtotal: ${formatMinor(t.sub)}`,`Descuento: ${formatMinor(t.disc)}`,`${taxTitle(q.tax,q.taxName)}: ${formatMinor(t.tax)}`,`*TOTAL: ${formatMinor(t.total)}*`,q.payment?'Forma de pago: '+q.payment:'',q.delivery?'Entrega: '+q.delivery:'',q.notes?'Observaciones: '+q.notes:'','', 'Gracias por tu preferencia.'].filter(Boolean).join('\n');const url='https://wa.me/?text='+encodeURIComponent(msg);const popup=window.open(url,'_blank','noopener,noreferrer');if(!popup){const a=document.createElement('a');a.href=url;a.target='_blank';a.rel='noopener noreferrer';document.body.appendChild(a);a.click();a.remove()}}
+$('shareQuote').addEventListener('click',()=>{const q=currentQuote();if(validateQuote(q))shareQuote(q)});
+
+function renderHistory(){const term=$('quoteSearch').value.toLowerCase(),status=$('statusFilter').value;const list=[...db.quotes].filter(q=>(!status||q.status===status)&&(`${q.code} ${q.client} ${q.phone||''} ${q.email||''}`.toLowerCase().includes(term))).sort((a,b)=>b.createdAt-a.createdAt);$('quoteHistory').innerHTML=list.length?`<div class="table-wrap"><table class="responsive-table"><thead><tr><th>Número / Fecha</th><th>Cliente</th><th>Total</th><th>Estado</th><th>Acciones</th></tr></thead><tbody>${list.map(q=>`<tr><td data-label="Número"><b>${esc(q.code)}</b><div class="text-[11px] text-slate-400">${esc(q.date||'')}</div></td><td data-label="Cliente">${esc(q.client)}</td><td data-label="Total" class="font-bold">${shownTotal(q)}</td><td data-label="Estado"><select class="field status-select !px-2 !py-1 text-xs" data-status="${q.id}">${['Borrador','Enviada','Pendiente','Aceptada','Rechazada'].map(s=>`<option ${q.status===s?'selected':''}>${s}</option>`).join('')}</select></td><td data-label="Acciones"><div class="row-actions flex flex-wrap gap-1"><button class="btn soft !px-2 !py-1" data-edit="${q.id}">Editar</button><button class="btn soft !px-2 !py-1" data-copy="${q.id}">Duplicar</button><button class="btn soft !px-2 !py-1" data-print="${q.id}">PDF</button><button class="btn green !px-2 !py-1" data-share="${q.id}">WhatsApp</button><button class="btn danger !px-2 !py-1" data-delete="${q.id}">×</button></div></td></tr>`).join('')}</tbody></table></div>`:'<div class="p-8 text-center text-sm text-slate-400">No hay cotizaciones que coincidan con la búsqueda.</div>';
+ $('quoteHistory').querySelectorAll('[data-status]').forEach(el=>el.addEventListener('change',()=>{const q=db.quotes.find(x=>x.id===el.dataset.status);if(!q)return;const previous=q.status;q.status=el.value;if(!persist()){q.status=previous;el.value=previous;notify('No se pudo guardar el estado. La cotización no cambió.');return}renderHistory();renderDashboard()}));
+ $('quoteHistory').querySelectorAll('[data-edit]').forEach(b=>b.addEventListener('click',()=>loadQuote(db.quotes.find(q=>q.id===b.dataset.edit))));
+ $('quoteHistory').querySelectorAll('[data-copy]').forEach(b=>b.addEventListener('click',()=>{const q=db.quotes.find(q=>q.id===b.dataset.copy);if(!q)return;const previous=JSON.stringify(db);const copy={...q,id:uid(),code:nextCodeFor(q.clientId||'',q.client),clientId:q.clientId||'',status:'Borrador',createdAt:Date.now()};db.quotes.push(copy);rememberCounter(copy.code);if(!persist()){db=JSON.parse(previous);notify('No se pudo duplicar. Los datos anteriores se conservaron.');return}renderHistory();renderDashboard();notify('Cotización duplicada con el siguiente número disponible.')})); 
+ $('quoteHistory').querySelectorAll('[data-print]').forEach(b=>b.addEventListener('click',()=>{const q=db.quotes.find(q=>q.id===b.dataset.print);if(q)printData(q)}));
+ $('quoteHistory').querySelectorAll('[data-share]').forEach(b=>b.addEventListener('click',()=>{const q=db.quotes.find(q=>q.id===b.dataset.share);if(q)shareQuote(q)}));
+ $('quoteHistory').querySelectorAll('[data-delete]').forEach(b=>b.addEventListener('click',()=>{if(!confirm('¿Eliminar esta cotización? Esta acción no se puede deshacer.'))return;const previous=JSON.stringify(db);db.quotes=db.quotes.filter(q=>q.id!==b.dataset.delete);if(!persist()){db=JSON.parse(previous);notify('No se pudo eliminar. La cotización se conservó.');return}renderHistory();renderDashboard();notify('Cotización eliminada.')}));
+}
+$('quoteSearch').addEventListener('input',renderHistory);$('statusFilter').addEventListener('change',renderHistory);
+
+function normClient(s){return String(s??'').trim().replace(/\s+/g,' ').toLocaleLowerCase('es')}
+function duplicateClient(c,exceptId){
+ const tax=normClient(c.taxId);
+ if(!tax)return null;
+ return db.clients.find(x=>x.id!==exceptId&&normClient(x.taxId)===tax)||null;
+}
+function clearClientForm(){$('clientForm').reset();$('clientId').value='';$('clientSave').textContent='Guardar cliente'}
+function quotesUntouched(snapshot){return JSON.stringify(db.quotes)===snapshot}
+function quoteIsLinked(q){return !!(q&&q.clientId&&db.clients.some(c=>c.id===q.clientId))}
+function quoteClientCandidates(){
+ const map=new Map();
+ db.quotes.forEach(q=>{
+  if(quoteIsLinked(q))return;
+  const name=String(q.client||'').trim().replace(/\s+/g,' ');
+  if(!name)return;
+  const key=normClient(name);
+  if(!map.has(key))map.set(key,{key,name,phone:'',email:'',taxId:'',address:'',codes:[],conflicts:[]});
+  const row=map.get(key);
+  if(q.code&&!row.codes.includes(q.code))row.codes.push(q.code);
+  ['phone','email','taxId','address'].forEach(field=>{
+   const value=String(q[field]||'').trim();
+   if(!value)return;
+   if(!row[field])row[field]=value;
+   else if(normClient(row[field])!==normClient(value)&&!row.conflicts.includes(field))row.conflicts.push(field);
+  });
+ });
+ return [...map.values()].sort((a,b)=>a.name.localeCompare(b.name,'es',{sensitivity:'base'}));
+}
+function clientFieldText(row,field){return row.conflicts.includes(field)?'':row[field]}
+function updateClientImportHint(){
+ const hint=$('clientImportHint'),rows=quoteClientCandidates();
+ if(!rows.length){hint.classList.add('hidden');hint.innerHTML='';return}
+ hint.classList.remove('hidden');
+ hint.className='mb-3 rounded-xl bg-amber-50 p-3 text-xs leading-relaxed text-amber-900';
+ hint.innerHTML=`Hay ${rows.length} nombre${rows.length===1?'':'s'} en cotizaciones sin ficha: <b>${rows.map(r=>esc(r.name)).join(', ')}</b>. Pulsa «Revisar clientes en cotizaciones», corrige los datos y guarda cada ficha. El número del documento se conserva y la cuenta queda ligada a esa persona.`;
+}
+function renderQuoteClientScan(rows){
+ const box=$('quoteClientScan');
+ pendingClientImport=rows;
+ const labels={phone:'teléfono',email:'correo',taxId:'identificación',address:'dirección'};
+ box.classList.remove('hidden');
+ if(!rows.length){box.innerHTML='<p class="rounded-xl bg-slate-50 p-3">Todas las cotizaciones con nombre ya tienen una ficha. Las que están en blanco siguen sin cliente.</p>';return}
+ box.innerHTML=`<div class="space-y-3">${rows.map(r=>{
+  const conflict=r.conflicts.length?`<p class="text-amber-700">Hay datos distintos entre sus cotizaciones (${r.conflicts.map(f=>labels[f]||f).join(', ')}). Esos campos están vacíos para que escribas el dato correcto.</p>`:'';
+  const field=(id,label,value)=>`<label class="block"><span class="label">${label}</span><input class="field" data-f="${id}" value="${esc(value||'')}"></label>`;
+  return `<div class="rounded-xl border border-slate-200 bg-slate-50 p-3" data-import-key="${esc(r.key)}"><p class="font-bold text-slate-800">Corregir: ${esc(r.name)}</p><p class="mb-2 text-slate-400">Cotizaciones: ${r.codes.map(esc).join(', ')||'—'}</p>${conflict}<div class="grid gap-2">${field('name','Nombre / Empresa *',r.name)}${field('lastName','Apellido','')}${field('phone','Teléfono',clientFieldText(r,'phone'))}${field('email','Correo',clientFieldText(r,'email'))}${field('taxId','RUC / Identificación',clientFieldText(r,'taxId'))}${field('address','Dirección',clientFieldText(r,'address'))}</div><label class="mt-2 flex items-center gap-2 font-bold text-slate-600"><input type="checkbox" data-f="link" checked> Ligar estas cotizaciones a la ficha. El número, el importe y el estado no cambian.</label><button class="btn primary mt-2 w-full" type="button" data-save-import>Guardar esta ficha</button></div>`;
+ }).join('')}<p class="text-slate-400">Guarda una ficha cada vez. Dos personas pueden llamarse igual si la identificación es distinta o está vacía.</p></div>`;
+ box.querySelectorAll('[data-save-import]').forEach(button=>button.addEventListener('click',()=>saveImportedClient(button.closest('[data-import-key]'))));
+ box.querySelectorAll('input').forEach(input=>input.addEventListener('keydown',e=>{if(e.key==='Enter'){e.preventDefault();saveImportedClient(input.closest('[data-import-key]'))}}));
+}
+function saveImportedClient(form){
+ const key=form.dataset.importKey;
+ const read=name=>form.querySelector(`[data-f="${name}"]`).value.trim().replace(/\s+/g,' ');
+ const c={id:uid(),name:read('name'),lastName:read('lastName'),phone:read('phone'),email:read('email'),taxId:read('taxId'),address:read('address'),active:true};
+ const link=form.querySelector('[data-f="link"]').checked;
+ if(!c.name){notify('Escribe el nombre antes de guardar la ficha.');form.querySelector('[data-f="name"]').focus();return}
+ if(!emailOk(c.email)){notify('El correo no es válido. Corrígelo o déjalo vacío.');form.querySelector('[data-f="email"]').focus();return}
+ const taxDup=duplicateClient(c);
+ if(taxDup){notify(`Esa identificación ya pertenece a ${taxDup.name}. Escribe otra o déjala vacía.`);return}
+ const targets=db.quotes.filter(q=>!quoteIsLinked(q)&&normClient(q.client)===key);
+ if(!targets.length){notify('Esas cotizaciones ya tienen ficha.');renderClients();return}
+ if(!confirm(`¿Guardar la ficha de ${[c.name,c.lastName].filter(Boolean).join(' ')} y ligar ${targets.length} cotización(es)?\n\n${targets.map(q=>q.code||'Sin número').join(', ')}\n\nEl número, el importe y el estado se conservan.`))return;
+ const previousClients=db.clients.map(x=>({...x}));
+ const quotesSnapshot=JSON.stringify(db.quotes);
+ db.clients.push(c);
+ if(link)targets.forEach(q=>{q.clientId=c.id});
+ if(!persist()){db.clients=previousClients;db.quotes=JSON.parse(quotesSnapshot);notify('No se pudo guardar. No se creó la ficha.');return}
+ renderClients();
+ renderQuoteClientScan(quoteClientCandidates());
+ populateClientSelect();
+ notify(link?`Ficha guardada y ${targets.length} cotización(es) ligadas.`:'Ficha guardada. Las cotizaciones siguen sin ligar.');
+}
+function clientIsActive(c){return !!c&&c.active!==false}
+function renderClients(){
+ const term=normClient($('clientSearch').value);
+ const showArchived=$('showArchivedClients').checked;
+ const activeCount=db.clients.filter(clientIsActive).length;
+ const list=db.clients.filter(c=>(showArchived||clientIsActive(c))&&normClient([c.name,c.lastName,c.phone,c.email,c.taxId,c.address,clientCode(c)].join(' ')).includes(term)).sort((a,b)=>String(a.name||'').localeCompare(String(b.name||''),'es',{sensitivity:'base'}));
+ $('clientCount').textContent=`${activeCount} activos · ${db.clients.length-activeCount} archivados`;
+ updateClientImportHint();
+ $('clientList').innerHTML=list.length?list.map(c=>{
+  const archived=!clientIsActive(c);
+  const who=esc([c.name,c.lastName].filter(Boolean).join(' '));
+  return `<div class="flex flex-wrap items-center justify-between gap-3 border-b border-slate-100 py-3"><div><div class="font-bold">${who}${archived?' <span class="pill status-draft">Archivado</span>':''}</div><div class="text-xs text-slate-500">${[c.phone,c.email].filter(Boolean).map(esc).join(' · ')||'Sin teléfono ni correo'}</div><div class="text-[11px] text-slate-400">${[c.taxId?('RUC/ID: '+c.taxId):'',c.address||'',clientCode(c)].filter(Boolean).map(esc).join(' · ')}</div></div><div class="flex gap-1"><button class="btn primary !px-3 !py-2" type="button" data-client-account="${esc(c.id)}">Ver cuenta</button><button class="btn soft !px-3 !py-2" data-client-edit="${esc(c.id)}">Editar</button><button class="btn danger !px-3 !py-2" type="button" data-client-active="${esc(c.id)}" data-next="${archived?'1':'0'}">${archived?'Restaurar':'Archivar'}</button><button class="btn danger !px-3 !py-2" type="button" data-client-delete="${esc(c.id)}">Eliminar</button></div></div>`;
+ }).join(''):'<p class="py-8 text-center text-sm text-slate-400">No hay clientes para mostrar.</p>';
+ $('clientList').querySelectorAll('[data-client-edit]').forEach(b=>b.addEventListener('click',()=>{
+  const c=db.clients.find(x=>x.id===b.dataset.clientEdit);
+  if(!c)return;
+  $('clientId').value=c.id;$('clientName').value=c.name||'';$('clientLastName').value=c.lastName||'';$('clientPhone').value=c.phone||'';$('clientEmail').value=c.email||'';$('clientTaxId').value=c.taxId||'';$('clientAddress').value=c.address||'';
+  $('clientSave').textContent='Actualizar cliente';
+  $('clientName').focus();
+ }));
+ $('clientList').querySelectorAll('[data-client-active]').forEach(b=>b.addEventListener('click',()=>setClientActive(b.dataset.clientActive,b.dataset.next==='1')));
+ $('clientList').querySelectorAll('[data-client-delete]').forEach(b=>b.addEventListener('click',()=>deleteClient(b.dataset.clientDelete)));
+ $('clientList').querySelectorAll('[data-client-account]').forEach(b=>b.addEventListener('click',()=>openAccount(b.dataset.clientAccount)));
+ populateClientSelect();
+ populateAccountSelect();
+}
+$('clientForm').addEventListener('submit',e=>{
+ e.preventDefault();
+ const id=$('clientId').value;
+ const c={id:id||uid(),name:$('clientName').value.trim().replace(/\s+/g,' '),lastName:$('clientLastName').value.trim().replace(/\s+/g,' '),phone:$('clientPhone').value.trim(),email:$('clientEmail').value.trim(),taxId:$('clientTaxId').value.trim(),address:$('clientAddress').value.trim()};
+ if(!c.name){notify('Escribe el nombre del cliente.');$('clientName').focus();return}
+ if(!emailOk(c.email)){notify('El correo no es válido. Revísalo o déjalo vacío.');$('clientEmail').focus();return}
+ const taxDup=normClient(c.taxId)?db.clients.find(x=>(!id||x.id!==id)&&normClient(x.taxId)===normClient(c.taxId)):null;
+ if(taxDup){notify(`Esa identificación ya pertenece a ${taxDup.name}. Cada cuenta necesita su propia identificación.`);return}
+ const previousClients=db.clients.map(x=>({...x}));
+ const quotesSnapshot=JSON.stringify(db.quotes);
+ if(id){
+  const i=db.clients.findIndex(x=>x.id===id);
+  if(i<0){notify('No se encontró el cliente que intentas editar.');return}
+  const old=db.clients[i];
+  if(normClient(old.name)!==normClient(c.name)){
+   const related=db.quotes.filter(q=>q.clientId===old.id);
+   if(related.length){
+    const updateNames=confirm(`"${old.name}" tiene ${related.length} cotización(es).\n\nAceptar: el nombre mostrado pasa a ser "${c.name}".\nCancelar: conservan el nombre impreso.\n\nEn ambos casos siguen vinculadas a esta ficha y conservan su número.`);
+    related.forEach(q=>{q.clientId=old.id;if(updateNames)q.client=c.name});
+   }
+  }
+  db.clients[i]={...old,...c,id:old.id,active:old.active!==false};
+ }else db.clients.push({...c,active:true});
+ if(!persist()){db.clients=previousClients;db.quotes=JSON.parse(quotesSnapshot);notify('No se pudo guardar. El directorio anterior se conservó.');return}
+ clearClientForm();
+ renderClients();
+ notify(id?'Cliente actualizado.':'Cliente guardado.');
+});
+$('clientCancel').addEventListener('click',clearClientForm);
+$('clientSearch').addEventListener('input',renderClients);
+$('showArchivedClients').addEventListener('change',renderClients);
+function deleteClient(id){
+ const c=db.clients.find(x=>x.id===id);
+ if(!c)return;
+ const who=[c.name,c.lastName].filter(Boolean).join(' ')||'este cliente';
+ if(!confirm(`¿Eliminar a "${who}" del directorio?\n\nDeja de aparecer al buscar. Las cotizaciones ya guardadas conservan su número.`))return;
+ const previousClients=db.clients.map(x=>({...x}));
+ const quotesSnapshot=JSON.stringify(db.quotes);
+ db.clients=db.clients.filter(x=>x.id!==id);
+ db.quotes.forEach(q=>{if(q&&q.clientId===id)q.clientId=''});
+ if(!persist()){db.clients=previousClients;db.quotes=JSON.parse(quotesSnapshot);notify('No se pudo eliminar. El directorio sigue igual.');return}
+ if($('clientId').value===id)clearClientForm();
+ if(openAccountId===id){openAccountId='';$('accountPanel').classList.add('hidden');$('accountClientSelect').value=''}
+ renderClients();
+ notify('Cliente eliminado. La búsqueda ya no lo muestra.');
+}
+function setClientActive(id,active){
+ const c=db.clients.find(x=>x.id===id);
+ if(!c)return;
+ const who=[c.name,c.lastName].filter(Boolean).join(' ')||'este cliente';
+ if(!confirm(active?`¿Restaurar a "${who}" en el directorio activo?\n\nSu historial se conserva.`:`¿Archivar a "${who}"?\n\nDeja de aparecer al buscar clientes para una cotización. Su cuenta, cotizaciones, cargos y abonos se conservan.`))return;
+ const previousClients=db.clients.map(x=>({...x}));
+ const quotesSnapshot=JSON.stringify(db.quotes);
+ const paymentsSnapshot=JSON.stringify(db.payments);
+ const invoicesSnapshot=JSON.stringify(db.invoices);
+ const adjustmentsSnapshot=JSON.stringify(db.adjustments);
+ c.active=active;
+ if(JSON.stringify(db.quotes)!==quotesSnapshot||JSON.stringify(db.payments)!==paymentsSnapshot||JSON.stringify(db.invoices)!==invoicesSnapshot||JSON.stringify(db.adjustments)!==adjustmentsSnapshot){
+  db.clients=previousClients;
+  notify('No se cambió el estado del cliente para proteger su historial.');
+  return;
+ }
+ if(!persist()){db.clients=previousClients;notify('No se pudo guardar. El directorio anterior se conservó.');return}
+ renderClients();
+ populateClientSelect();
+ notify(active?'Cliente restaurado.':'Cliente archivado. Su historial sigue en la cuenta.');
+}
+$('scanQuoteClients').addEventListener('click',()=>{
+ const rows=quoteClientCandidates();
+ renderQuoteClientScan(rows);
+ if(!rows.length)notify('No hay clientes nuevos por registrar.');
+ else notify(rows.length===1?'Hay 1 cliente sin registrar.':`Hay ${rows.length} clientes sin registrar.`);
+});
+function clientCode(c){return 'Cód. '+String(c&&c.id||'').slice(-6)}
+function clientAccountLabel(c){const who=[c.name,c.lastName].filter(Boolean).join(' ');return [who,c.taxId?('ID '+c.taxId):'',c.phone||'',clientCode(c)].filter(Boolean).join(' · ')}
+function clientPickerLabel(c){return clientAccountLabel(c)+(c&&c.active===false?' · Archivado':'')}
+function quotesForAccount(id){return db.quotes.filter(q=>q&&q.clientId===id)}
+function paymentsForAccount(id){return db.payments.filter(p=>p&&p.clientId===id)}
+function invoicesFor(id){return db.invoices.filter(i=>i&&i.clientId===id)}
+function adjustmentsFor(id){return db.adjustments.filter(a=>a&&a.clientId===id)}
+function quoteTotalMinor(q){const t=quoteMath(q);return t&&!t.overflow?t.total:null}
+function sumMinor(list){let acc=0n;for(const n of list){if(n==null||!fitsMinor(acc+n))return null;acc+=n}return acc}
+function minorOf(value){return parseScaled(value,currencyDecimals())}
+function minorToInput(minor){
+ const decimals=currencyDecimals();
+ const neg=minor<0n;
+ const body=(neg?-minor:minor).toString().padStart(decimals+1,'0');
+ const whole=decimals?body.slice(0,-decimals):body;
+ const frac=decimals?body.slice(-decimals):'';
+ return (neg?'-':'')+(decimals?whole+'.'+frac:whole);
+}
+function nextInvoiceCode(){
+ const used=new Set();
+ db.invoices.forEach(i=>{if(i&&i.code)used.add(String(i.code))});
+ db.quotes.forEach(q=>{if(q&&q.code)used.add(String(q.code))});
+ let n=0;
+ db.invoices.forEach(i=>{n=Math.max(n,quoteNumber(i&&i.code))});
+ const counter=Number(db.nextInvoice);
+ if(Number.isFinite(counter)&&counter-1>n)n=counter-1;
+ let code='';
+ do{n+=1;code='FAC-'+String(n).padStart(6,'0')}while(used.has(code));
+ return code;
+}
+function rememberInvoice(code){const n=quoteNumber(code)+1;if(!Number.isFinite(Number(db.nextInvoice))||Number(db.nextInvoice)<n)db.nextInvoice=n}
+function accountTotals(id){
+ const invoices=invoicesFor(id),pays=paymentsForAccount(id),adjs=adjustmentsFor(id);
+ const billedParts=invoices.map(i=>minorOf(i.amount)).concat(adjs.filter(a=>a.effect==='facturado').map(a=>minorOf(a.amount)));
+ const paidParts=pays.map(p=>minorOf(p.amount)).concat(adjs.filter(a=>a.effect==='pagado').map(a=>minorOf(a.amount)));
+ const billed=billedParts.some(n=>n==null)?null:sumMinor(billedParts);
+ const paid=paidParts.some(n=>n==null)?null:sumMinor(paidParts);
+ const balance=billed!=null&&paid!=null&&fitsMinor(billed-paid)?billed-paid:null;
+ return {invoices,pays,adjs,billed,paid,balance};
+}
+function documentRemaining(inv){
+ const base=minorOf(inv.amount);
+ if(base==null)return null;
+ const adjs=adjustmentsFor(inv.clientId).filter(a=>a.invoiceId===inv.id);
+ const parts=adjs.map(a=>minorOf(a.amount)).concat(paymentsForAccount(inv.clientId).filter(p=>p.invoiceId===inv.id).map(p=>minorOf(p.amount)));
+ if(parts.some(n=>n==null))return null;
+ const charge=sumMinor([base,...adjs.filter(a=>a.effect==='facturado').map(a=>minorOf(a.amount))]);
+ const paid=sumMinor(paymentsForAccount(inv.clientId).filter(p=>p.invoiceId===inv.id).map(p=>minorOf(p.amount)).concat(adjs.filter(a=>a.effect==='pagado').map(a=>minorOf(a.amount))));
+ if(charge==null||paid==null||!fitsMinor(charge-paid))return null;
+ return charge-paid;
+}
+function docState(inv){
+ const rem=documentRemaining(inv);
+ if(rem==null)return {label:'Sin calcular',cls:'status-draft',rem};
+ if(rem<=0n)return {label:'Pagado',cls:'account-ok',rem};
+ if(inv.due&&inv.due<today())return {label:'Vencido',cls:'account-late',rem};
+ return {label:'Pendiente',cls:'account-due',rem};
+}
+function accountStanding(id,balance){
+ if(invoicesFor(id).some(inv=>docState(inv).label==='Vencido'))return {label:'Vencida',cls:'pill account-late'};
+ if(balance==null)return {label:'Sin calcular',cls:'pill status-draft'};
+ if(balance>0n)return {label:'Pendiente',cls:'pill account-due'};
+ return {label:'Al día',cls:'pill account-ok'};
+}
+function setLedgerBusy(busy){['invSave','paySave','adjSave'].forEach(id=>{if($(id))$(id).disabled=busy})}
+function ledgerCommit(mutate){
+ if(ledgerLock)return 'Espera a que termine el registro anterior.';
+ ledgerLock=true;
+ setLedgerBusy(true);
+ const previous=JSON.stringify(db);
+ const quotesSnapshot=JSON.stringify(db.quotes);
+ const clientsSnapshot=JSON.stringify(db.clients);
+ try{
+  const error=mutate()||'';
+  if(error){db=JSON.parse(previous);return error}
+  if(JSON.stringify(db.quotes)!==quotesSnapshot||JSON.stringify(db.clients)!==clientsSnapshot){db=JSON.parse(previous);return 'No se guardó el movimiento para no alterar clientes ni cotizaciones.'}
+  if(!persist()){db=JSON.parse(previous);return 'No se pudo guardar. La cuenta no cambió.'}
+  return '';
+ }catch(err){
+  try{db=JSON.parse(previous)}catch(e){}
+  return 'No se pudo registrar el movimiento.';
+ }finally{
+  ledgerLock=false;
+  setLedgerBusy(false);
+ }
+}
+function fillSelect(id,placeholder,options,keep){
+ const sel=$(id);
+ const current=keep!=null?keep:sel.value;
+ sel.innerHTML=`<option value="">${esc(placeholder)}</option>`+options.map(o=>`<option value="${esc(o.value)}">${esc(o.label)}</option>`).join('');
+ sel.value=options.some(o=>o.value===current)?current:'';
+}
+function closeAccountView(){
+ const panel=$('accountPanel');
+ panel.classList.add('hidden');
+ panel.dataset.accountId='';
+ $('accountTitle').textContent='';
+ $('accountCode').textContent='';
+ $('accountIdentity').innerHTML='';
+ $('accountQuoteSummary').textContent='';
+ $('accountQuotes').innerHTML='';
+ $('accountDocs').innerHTML='';
+ $('accountPending').innerHTML='';
+ $('accountPayments').innerHTML='';
+ $('accountMoves').innerHTML='';
+ $('accountStanding').textContent='Sin calcular';
+ $('accountStanding').className='pill status-draft';
+ $('accountBilled').textContent=money(0);
+ $('accountPaid').textContent=money(0);
+ $('accountBalance').textContent=money(0);
+}
+function renderAccount(){
+ const c=db.clients.find(x=>x.id===openAccountId);
+ const panel=$('accountPanel');
+ if(!c){closeAccountView();return}
+ const switching=panel.dataset.accountId!==c.id;
+ panel.classList.remove('hidden');
+ if(switching){
+  ['invAmount','invConcept','invNote','invDue','payAmount','payReference','payNote','adjAmount','adjReason'].forEach(id=>$(id).value='');
+  $('invDate').value=today();$('payDate').value=today();$('adjDate').value=today();
+  $('payMethod').value='Efectivo';$('adjEffect').value='facturado';$('adjDir').value='disminuir';
+ }
+ panel.dataset.accountId=c.id;
+ const who=[c.name,c.lastName].filter(Boolean).join(' ');
+ $('accountTitle').textContent=who+(c.active===false?' (archivado)':'');
+ $('accountCode').textContent=clientCode(c)+' · '+c.id;
+ $('accountIdentity').innerHTML=[['Nombre',c.name||'—'],['Apellido',c.lastName||'—'],['Identificación',c.taxId||'—'],['Teléfono',c.phone||'—'],['Código',clientCode(c)]].map(([k,v])=>`<span class="mr-3 inline-block"><span class="text-slate-400">${k}:</span> <b>${esc(v)}</b></span>`).join('')+(c.email?`<div class="mt-1">${esc(c.email)}</div>`:'')+(c.address?`<div>${esc(c.address)}</div>`:'');
+ const totals=accountTotals(c.id);
+ const standing=accountStanding(c.id,totals.balance);
+ $('accountStanding').textContent=standing.label;
+ $('accountStanding').className=standing.cls;
+ $('accountBilled').textContent=totals.billed==null?'—':formatMinor(totals.billed);
+ $('accountPaid').textContent=totals.paid==null?'—':formatMinor(totals.paid);
+ $('accountBalance').textContent=totals.balance==null?'—':formatMinor(totals.balance);
+ const quotes=quotesForAccount(c.id);
+ const pendingN=quotes.filter(q=>q.status!=='Aceptada'&&q.status!=='Rechazada').length;
+ const acceptedN=quotes.filter(q=>q.status==='Aceptada').length;
+ const rejectedN=quotes.filter(q=>q.status==='Rechazada').length;
+ $('accountQuoteSummary').textContent=`Pendientes: ${pendingN} · Aceptadas: ${acceptedN} · Rechazadas: ${rejectedN}. Aceptar una cotización no emite una factura.`;
+ const ordered=[...quotes].sort((a,b)=>String(b.date||'').localeCompare(String(a.date||''))||((b.createdAt||0)-(a.createdAt||0)));
+ $('accountQuotes').innerHTML=ordered.length?`<div class="table-wrap"><table class="responsive-table"><thead><tr><th>Número</th><th>Fecha</th><th>Estado</th><th>Total</th><th></th></tr></thead><tbody>${ordered.map(q=>`<tr><td data-label="Número">${esc(q.code||'')}</td><td data-label="Fecha">${esc(q.date||'—')}</td><td data-label="Estado"><span class="pill ${statusClass(q.status)}">${esc(q.status||'')}</span></td><td data-label="Total">${shownTotal(q)}</td><td data-label="Cargo">${q.status==='Aceptada'?`<button type="button" class="btn soft !px-2 !py-1" data-bill-quote="${esc(q.id)}">Registrar cargo</button>`:'—'}</td></tr>`).join('')}</tbody></table></div>`:'<p class="text-sm text-slate-400">Esta cuenta no tiene cotizaciones vinculadas por su identificador.</p>';
+ $('accountQuotes').querySelectorAll('[data-bill-quote]').forEach(b=>b.addEventListener('click',()=>prefillInvoice(b.dataset.billQuote)));
+ const keepQuote=switching?'':$('invQuote').value;
+ const keepPay=switching?'':$('payInvoice').value;
+ const keepAdjInv=switching?'':$('adjInvoice').value;
+ const keepAdjPay=switching?'':$('adjPayment').value;
+ fillSelect('invQuote','Sin cotización vinculada',quotes.map(q=>({value:q.id,label:`${q.code||'Sin número'} · ${q.status||''} · ${shownTotal(q)}`})),keepQuote);
+ fillSelect('payInvoice','Abono general de la cuenta',totals.invoices.map(i=>{const rem=documentRemaining(i);return {value:i.id,label:`${i.code} · saldo ${rem==null?'—':formatMinor(rem)}`}}),keepPay);
+ fillSelect('adjInvoice','Ajuste de la cuenta',totals.invoices.map(i=>({value:i.id,label:i.code+(i.concept?' · '+i.concept:'')})),keepAdjInv);
+ fillSelect('adjPayment','Ninguno',totals.pays.map(p=>({value:p.id,label:`${p.date||'—'} · ${money(p.amount)} · ${p.reference||p.note||p.method||'Abono'}`})),keepAdjPay);
+ const docRows=totals.invoices.map(i=>{const state=docState(i);return {i,state}});
+ $('accountDocs').innerHTML=docRows.length?`<div class="table-wrap"><table class="responsive-table"><thead><tr><th>Número</th><th>Fecha</th><th>Vence</th><th>Concepto</th><th>Importe</th><th>Saldo</th><th>Estado</th></tr></thead><tbody>${docRows.map(({i,state})=>`<tr><td data-label="Número">${esc(i.code||'')}</td><td data-label="Fecha">${esc(i.date||'—')}</td><td data-label="Vence">${esc(i.due||'—')}</td><td data-label="Concepto">${esc(i.concept||'')}</td><td data-label="Importe">${minorOf(i.amount)==null?'—':formatMinor(minorOf(i.amount))}</td><td data-label="Saldo">${state.rem==null?'—':formatMinor(state.rem)}</td><td data-label="Estado"><span class="pill ${state.cls}">${state.label}</span></td></tr>`).join('')}</tbody></table></div>`:`<p class="text-sm text-slate-500">No hay cargos emitidos. Las cotizaciones, aunque estén aceptadas, no se convierten en facturas.${totals.pays.length?' Los abonos ya registrados se conservan abajo.':''}</p>`;
+ const pending=docRows.filter(row=>row.state.rem!=null&&row.state.rem>0n);
+ $('accountPending').innerHTML=pending.length?`<div class="table-wrap"><table class="responsive-table"><thead><tr><th>Documento</th><th>Vence</th><th>Saldo</th><th>Estado</th></tr></thead><tbody>${pending.map(({i,state})=>`<tr><td data-label="Documento">${esc(i.code||'')} · ${esc(i.concept||'')}</td><td data-label="Vence">${esc(i.due||'Sin fecha')}</td><td data-label="Saldo">${formatMinor(state.rem)}</td><td data-label="Estado"><span class="pill ${state.cls}">${state.label}</span></td></tr>`).join('')}</tbody></table></div>`:'<p class="text-sm text-slate-400">No hay documentos con saldo pendiente.</p>';
+ $('accountPayments').innerHTML=totals.pays.length?`<div class="table-wrap"><table class="responsive-table"><thead><tr><th>Fecha</th><th>Importe</th><th>Método</th><th>Referencia</th><th>Documento</th><th>Observaciones</th><th></th></tr></thead><tbody>${totals.pays.map(p=>{const inv=totals.invoices.find(i=>i.id===p.invoiceId);return `<tr><td data-label="Fecha">${esc(p.date||'—')}</td><td data-label="Importe">${money(p.amount)}</td><td data-label="Método">${esc(p.method||'—')}</td><td data-label="Referencia">${esc(p.reference||'—')}</td><td data-label="Documento">${esc(inv?inv.code:'Cuenta')}</td><td data-label="Observaciones">${esc(p.note||'—')}</td><td data-label="Corregir"><button type="button" class="btn soft !px-2 !py-1" data-correct-pay="${esc(p.id)}">Corregir</button></td></tr>`}).join('')}</tbody></table></div>`:'<p class="text-sm text-slate-400">Todavía no hay abonos en esta cuenta.</p>';
+ $('accountPayments').querySelectorAll('[data-correct-pay]').forEach(b=>b.addEventListener('click',()=>{
+  $('adjPayment').value=b.dataset.correctPay;
+  $('adjEffect').value='pagado';
+  $('adjDir').value='disminuir';
+  if(!$('adjDate').value)$('adjDate').value=today();
+  $('adjReason').focus();
+  notify('El abono original se conserva. Registra el ajuste con su motivo.');
+ }));
+ const moves=[];
+ totals.invoices.forEach(i=>moves.push({date:i.date||'',createdAt:i.createdAt||0,label:'Cargo',detail:i.concept||'',ref:i.code||'',amount:minorOf(i.amount)}));
+ totals.pays.forEach(p=>{const amount=minorOf(p.amount);moves.push({date:p.date||'',createdAt:p.createdAt||0,label:'Abono',detail:[p.method,p.note].filter(Boolean).join(' · '),ref:p.reference||p.note||'',amount:amount==null?null:-amount})});
+ totals.adjs.forEach(a=>moves.push({date:a.date||'',createdAt:a.createdAt||0,label:a.effect==='pagado'?'Ajuste de pago':'Ajuste de cargo',detail:a.reason||'',ref:a.invoiceId?(totals.invoices.find(i=>i.id===a.invoiceId)?.code||''):'',amount:minorOf(a.amount)}));
+ moves.sort((a,b)=>String(a.date).localeCompare(String(b.date))||(a.createdAt-b.createdAt));
+ $('accountMoves').innerHTML=moves.length?`<div class="table-wrap"><table class="responsive-table"><thead><tr><th>Fecha</th><th>Movimiento</th><th>Detalle</th><th>Referencia</th><th>Efecto en saldo</th></tr></thead><tbody>${moves.map(m=>`<tr><td data-label="Fecha">${esc(m.date||'—')}</td><td data-label="Movimiento">${esc(m.label)}</td><td data-label="Detalle">${esc(m.detail||'—')}</td><td data-label="Referencia">${esc(m.ref||'—')}</td><td data-label="Efecto en saldo">${m.amount==null?'—':formatMinor(m.amount)}</td></tr>`).join('')}</tbody></table></div>`:'<p class="text-sm text-slate-400">Todavía no hay cargos, abonos ni ajustes.</p>';
+ if(!$('invDate').value)$('invDate').value=today();
+ if(!$('payDate').value)$('payDate').value=today();
+ if(!$('adjDate').value)$('adjDate').value=today();
+}
+function populateAccountSelect(){
+ const sel=$('accountClientSelect');
+ const keep=openAccountId&&db.clients.some(c=>c.id===openAccountId)?openAccountId:'';
+ openAccountId=keep;
+ const clients=[...db.clients].sort((a,b)=>String(a.name||'').localeCompare(String(b.name||''),'es',{sensitivity:'base'}));
+ sel.innerHTML='<option value="">Selecciona un cliente para abrir su cuenta</option>'+clients.map(c=>`<option value="${esc(c.id)}">${esc(clientPickerLabel(c))}</option>`).join('');
+ sel.value=keep;
+ if(keep)renderAccount();else closeAccountView();
+}
+function openAccount(id){
+ if(!db.clients.some(c=>c.id===id)){openAccountId='';$('accountClientSelect').value='';closeAccountView();return}
+ openAccountId=id;
+ if($('accountClientSelect').value!==id)$('accountClientSelect').value=id;
+ renderAccount();
+ const panel=$('accountPanel');
+ if(!panel.classList.contains('hidden'))panel.scrollIntoView({behavior:'smooth',block:'nearest'});
+}
+function prefillInvoice(quoteId){
+ const q=db.quotes.find(x=>x.id===quoteId&&x.clientId===openAccountId);
+ if(!q)return;
+ $('invQuote').value=q.id;
+ $('invConcept').value='Cargo por cotización '+(q.code||'');
+ const total=quoteTotalMinor(q);
+ $('invAmount').value=total==null?'':minorToInput(total);
+ if(!$('invDate').value)$('invDate').value=today();
+ $('invAmount').focus();
+ notify('Revisa el importe y pulsa Registrar cargo. La cotización sigue igual.');
+}
+function sameMoney(a,b){const x=minorOf(a),y=minorOf(b);return x!=null&&y!=null&&x===y}
+function registerInvoice(event){
+ event.preventDefault();
+ const client=db.clients.find(c=>c.id===openAccountId);
+ if(!client){notify('Abre la cuenta antes de registrar un cargo.');return}
+ const raw=$('invAmount').value.trim();
+ const amount=minorOf(raw);
+ if(amount==null||amount<=0n){notify('Escribe un importe mayor que cero.');$('invAmount').focus();return}
+ const concept=$('invConcept').value.trim();
+ if(!concept){notify('Escribe el concepto del cargo.');$('invConcept').focus();return}
+ const quoteId=$('invQuote').value;
+ if(quoteId&&!db.quotes.some(q=>q.id===quoteId&&q.clientId===client.id)){notify('Esa cotización no pertenece a esta cuenta.');return}
+ const date=$('invDate').value||today();
+ const due=$('invDue').value;
+ if(due&&due<date){notify('La fecha de vencimiento no puede ser anterior a la del cargo.');$('invDue').focus();return}
+ const note=$('invNote').value.trim();
+ if(db.invoices.some(i=>i.clientId===client.id&&i.date===date&&String(i.due||'')===String(due||'')&&i.concept===concept&&sameMoney(i.amount,raw)&&String(i.quoteId||'')===String(quoteId||'')&&normClient(i.note)===normClient(note))){notify('Ese cargo ya está registrado. Cambia el concepto o la observación si es otro documento.');return}
+ const error=ledgerCommit(()=>{
+  const code=nextInvoiceCode();
+  if(db.invoices.some(i=>i.code===code)||db.quotes.some(q=>q&&q.code===code))return 'No se pudo asignar un número de cargo único.';
+  db.invoices.push({id:uid(),clientId:client.id,code,quoteId:quoteId||'',date,due,amount:raw,concept,note,createdAt:Date.now()});
+  rememberInvoice(code);
+  return '';
+ });
+ if(error){notify(error);return}
+ $('invAmount').value='';$('invConcept').value='';$('invNote').value='';$('invDue').value='';$('invQuote').value='';
+ renderAccount();
+ notify('Cargo registrado en esta cuenta. La cotización no cambió.');
+}
+function registerPayment(event){
+ event.preventDefault();
+ const client=db.clients.find(c=>c.id===openAccountId);
+ if(!client){notify('Abre la cuenta antes de registrar un abono.');return}
+ const raw=$('payAmount').value.trim();
+ const amount=minorOf(raw);
+ if(amount==null||amount<=0n){notify('Escribe un abono mayor que cero.');$('payAmount').focus();return}
+ const date=$('payDate').value||today();
+ const method=$('payMethod').value||'Otro';
+ const reference=$('payReference').value.trim();
+ const note=$('payNote').value.trim();
+ const invoiceId=$('payInvoice').value;
+ if(invoiceId){
+  const inv=db.invoices.find(i=>i.id===invoiceId&&i.clientId===client.id);
+  if(!inv){notify('Ese documento no pertenece a esta cuenta.');return}
+  const rem=documentRemaining(inv);
+  if(rem==null){notify('No se pudo calcular el saldo de ese documento.');return}
+  if(rem<=0n){notify('Ese documento ya no tiene saldo. Puedes registrarlo como abono general.');return}
+  if(amount>rem){notify('El abono supera el saldo de ese documento. Usa un parcial o déjalo como abono general.');$('payAmount').focus();return}
+ }
+ if(reference&&db.payments.some(p=>p.clientId===client.id&&normClient(p.reference)===normClient(reference))){notify('Esa referencia ya está registrada en esta cuenta.');$('payReference').focus();return}
+ if(db.payments.some(p=>p.clientId===client.id&&String(p.date||'')===date&&normClient(p.method)===normClient(method)&&normClient(p.reference)===normClient(reference)&&normClient(p.note)===normClient(note)&&String(p.invoiceId||'')===String(invoiceId||'')&&sameMoney(p.amount,raw))){notify('Ese abono ya está registrado. Cambia la referencia o la observación si es otro pago.');return}
+ const error=ledgerCommit(()=>{
+  db.payments.push({id:uid(),clientId:client.id,invoiceId:invoiceId||'',amount:raw,date,method,reference,note,createdAt:Date.now()});
+  return '';
+ });
+ if(error){notify(error);return}
+ $('payAmount').value='';$('payReference').value='';$('payNote').value='';
+ renderAccount();
+ notify('Abono registrado en esta cuenta.');
+}
+function registerAdjustment(event){
+ event.preventDefault();
+ const client=db.clients.find(c=>c.id===openAccountId);
+ if(!client){notify('Abre la cuenta antes de registrar un ajuste.');return}
+ const reason=$('adjReason').value.trim();
+ if(!reason){notify('Escribe el motivo del ajuste.');$('adjReason').focus();return}
+ const raw=$('adjAmount').value.trim();
+ const amount=minorOf(raw);
+ if(amount==null||amount<=0n){notify('Escribe un importe mayor que cero.');$('adjAmount').focus();return}
+ const effect=$('adjEffect').value==='pagado'?'pagado':'facturado';
+ const delta=($('adjDir').value==='aumentar'?1n:-1n)*amount;
+ const invoiceId=$('adjInvoice').value;
+ const paymentId=$('adjPayment').value;
+ if(invoiceId&&!db.invoices.some(i=>i.id===invoiceId&&i.clientId===client.id)){notify('Ese documento no pertenece a esta cuenta.');return}
+ if(paymentId&&!db.payments.some(p=>p.id===paymentId&&p.clientId===client.id)){notify('Ese abono no pertenece a esta cuenta.');return}
+ const totals=accountTotals(client.id);
+ const base=effect==='facturado'?totals.billed:totals.paid;
+ if(base==null||!fitsMinor(base+delta)){notify('No se pudo calcular el ajuste.');return}
+ if(base+delta<0n){notify('El ajuste dejaría ese total en negativo. No se registró.');return}
+ const date=$('adjDate').value||today();
+ const signed=minorToInput(delta);
+ const error=ledgerCommit(()=>{
+  db.adjustments.push({id:uid(),clientId:client.id,date,effect,amount:signed,reason,invoiceId:invoiceId||'',paymentId:paymentId||'',createdAt:Date.now()});
+  return '';
+ });
+ if(error){notify(error);return}
+ $('adjAmount').value='';$('adjReason').value='';
+ renderAccount();
+ notify('Ajuste registrado. El movimiento original se conserva.');
+}
+$('accountClientSelect').addEventListener('change',()=>{const id=$('accountClientSelect').value;if(!id){openAccountId='';closeAccountView();return}openAccount(id)});
+$('accountClose').addEventListener('click',()=>{openAccountId='';$('accountClientSelect').value='';closeAccountView()});
+$('invoiceForm').addEventListener('submit',registerInvoice);
+$('paymentForm').addEventListener('submit',registerPayment);
+$('adjustForm').addEventListener('submit',registerAdjustment);
+$('invQuote').addEventListener('change',()=>{if($('invQuote').value)prefillInvoice($('invQuote').value)});
+
+function renderCatalog(){const term=$('catalogSearch').value.toLowerCase(),list=db.catalog.filter(p=>(p.name+' '+p.type).toLowerCase().includes(term));$('catalogList').innerHTML=list.length?list.map(p=>`<div class="flex flex-wrap items-center justify-between gap-3 border-b border-slate-100 py-3"><div><div class="font-bold">${esc(p.name)}</div><div class="text-xs text-slate-500">${esc(p.type)} · ${money(p.price)}</div></div><div class="flex gap-1"><button class="btn soft !px-3 !py-2" data-prod-edit="${p.id}">Editar</button><button class="btn danger !px-3 !py-2" data-prod-del="${p.id}">Eliminar</button></div></div>`).join(''):'<p class="py-8 text-center text-sm text-slate-400">Tu catálogo está vacío.</p>';
+ $('catalogList').querySelectorAll('[data-prod-edit]').forEach(b=>b.addEventListener('click',()=>{const p=db.catalog.find(x=>x.id===b.dataset.prodEdit);$('productId').value=p.id;$('productName').value=p.name;$('productPrice').value=p.price;$('productType').value=p.type}));
+ $('catalogList').querySelectorAll('[data-prod-del]').forEach(b=>b.addEventListener('click',()=>{if(!confirm('¿Eliminar del catálogo?'))return;const previous=JSON.stringify(db);db.catalog=db.catalog.filter(x=>x.id!==b.dataset.prodDel);if(!persist()){db=JSON.parse(previous);notify('No se pudo eliminar. El catálogo se conservó.');return}renderCatalog()}));populateCatalogSelect()}
+$('catalogForm').addEventListener('submit',e=>{
+ e.preventDefault();
+ const previous=JSON.stringify(db);
+ const id=$('productId').value,p={id:id||uid(),name:$('productName').value.trim().replace(/\s+/g,' '),price:Math.max(0,Number($('productPrice').value)||0),type:$('productType').value};
+ if(!p.name){notify('Escribe la descripción.');return}
+ const dup=db.catalog.find(x=>x.id!==p.id&&normClient(x.name)===normClient(p.name));
+ if(dup){notify('Ese producto o servicio ya está en el catálogo. Ábrelo con Editar.');return}
+ const i=db.catalog.findIndex(x=>x.id===id);
+ if(i>=0)db.catalog[i]=p;else db.catalog.push(p);
+ if(!persist()){db=JSON.parse(previous);notify('No se pudo guardar. Se conservaron los datos anteriores.');return}
+ $('catalogForm').reset();$('productId').value='';renderCatalog();notify('Producto o servicio guardado.')
+});
+$('productCancel').addEventListener('click',()=>{$('catalogForm').reset();$('productId').value=''});$('catalogSearch').addEventListener('input',renderCatalog);
+
+function renderSettings(){const b=db.business;[['bizName','name'],['bizRuc','ruc'],['bizPhone','phone'],['bizEmail','email'],['bizWeb','web'],['bizAddress','address'],['bizCountry','country'],['bizCurrency','currency'],['bizTaxName','taxName'],['bizTax','tax'],['bizDecimals','decimals'],['bizDecimalSep','decimalSep'],['bizThousandSep','thousandSep']].forEach(([id,k])=>{if($(id))$(id).value=b[k]??''});showLogo();updateBizPreview()}
+function showLogo(){if(db.business.logo){$('logoPreview').src=db.business.logo;$('logoPreview').classList.remove('hidden');$('logoFallback').classList.add('hidden')}else{$('logoPreview').classList.add('hidden');$('logoFallback').classList.remove('hidden')}}
+function updateBizPreview(){$('bizPreviewName').textContent=$('bizName').value||db.business.name||'Tu negocio';$('bizPreviewInfo').textContent=[$('bizPhone').value||db.business.phone,$('bizEmail').value||db.business.email].filter(Boolean).join(' · ')}
+$('bizName').addEventListener('input',updateBizPreview);$('bizPhone').addEventListener('input',updateBizPreview);$('bizEmail').addEventListener('input',updateBizPreview);
+$('settingsForm').addEventListener('submit',e=>{
+ e.preventDefault();
+ if($('bizDecimalSep').value&&$('bizThousandSep').value&&$('bizDecimalSep').value===$('bizThousandSep').value){notify('El separador decimal y el de miles deben ser distintos.');return}
+ const previous=JSON.stringify(db.business);
+ const fields={name:'bizName',ruc:'bizRuc',phone:'bizPhone',email:'bizEmail',web:'bizWeb',address:'bizAddress',country:'bizCountry',currency:'bizCurrency',taxName:'bizTaxName',tax:'bizTax',decimals:'bizDecimals',decimalSep:'bizDecimalSep',thousandSep:'bizThousandSep'};
+ Object.entries(fields).forEach(([k,id])=>{if(k==='tax')db.business[k]=Math.min(100,Math.max(0,Number($(id).value)||0));else if(k==='decimals')db.business[k]=Math.min(4,Math.max(0,Math.round(Number($(id).value)||0)));else db.business[k]=$(id).value.trim()});
+ db.business.currency=String(db.business.currency||'').toUpperCase();
+ if(!persist()){db.business=JSON.parse(previous);notify('No se pudo guardar la configuración. Se conservaron los valores anteriores.');return}
+ updateBizPreview();calcDraft();notify('Datos del negocio guardados.');
+});
+$('bizLogo').addEventListener('change',e=>{const f=e.target.files[0];if(!f)return;if(!['image/png','image/jpeg','image/webp'].includes(f.type)){notify('Formato no permitido. Usa PNG, JPG o WEBP.');return}if(f.size>1.5*1024*1024){notify('El logo supera 1.5 MB. Reduce su tamaño.');e.target.value='';return}const r=new FileReader();r.onload=()=>{const previous=db.business.logo;db.business.logo=r.result;if(!persist()){db.business.logo=previous;notify('No se pudo guardar el logo. Se conservó el anterior.');return}showLogo();notify('Logo actualizado.')};r.readAsDataURL(f)});
+$('removeLogo').addEventListener('click',()=>{const previous=db.business.logo;db.business.logo='';if(!persist()){db.business.logo=previous;notify('No se pudo quitar el logo.');return}showLogo();$('bizLogo').value='';notify('Logo eliminado.')});
+
+function backup(){
+ const blob=new Blob([JSON.stringify(db,null,2)],{type:'application/json;charset=utf-8'});
+ const url=URL.createObjectURL(blob);
+ const a=document.createElement('a');
+ a.href=url;
+ a.download='CotizaFlash-respaldo-'+today()+'-'+new Date().toTimeString().slice(0,8).replace(/:/g,'')+'.json';
+ a.style.display='none';
+ document.body.appendChild(a);
+ a.click();
+ a.remove();
+ setTimeout(()=>URL.revokeObjectURL(url),1500);
+ notify('Se solicitó la descarga del respaldo. Revisa la carpeta Descargas.');
+}
+$('backupBtn').addEventListener('click',backup);$('backupTop').addEventListener('click',backup);
+function emptyBase(){
+ if(!confirm('Se borran en este equipo los clientes, cotizaciones, catálogo, cargos y datos del negocio.\n\nLas casillas quedan libres para escribir el producto o servicio, a quién se ofrece, cantidades, precios y tiempo de entrega.\n\n¿Vaciar la base de este equipo?'))return;
+ const previous=JSON.stringify(db);
+ db=blank();
+ if(!persist()){try{db=JSON.parse(previous)}catch(e){}notify('No se pudo vaciar. Los datos anteriores siguen guardados.');return}
+ editingQuoteId=null;linkedClientId='';openAccountId='';pendingClientImport=[];draftItems=[];
+ resetQuoteForm();
+ go('settings');
+ notify('Base vacía. Cada persona registra su negocio, sus clientes y sus cotizaciones.');
+}
+$('emptyBase').addEventListener('click',emptyBase);
+function downloadJSONSnapshot(snapshot, suffix){
+  const blob=new Blob([JSON.stringify(snapshot,null,2)],{type:'application/json;charset=utf-8'});
+  const url=URL.createObjectURL(blob);
+  const a=document.createElement('a');
+  a.href=url;
+  a.download=`CotizaFlash-${suffix}-${today()}-${new Date().toTimeString().slice(0,8).replace(/:/g,'')}.json`;
+  a.style.display='none';
+  document.body.appendChild(a);
+  a.click();
+  a.remove();
+  setTimeout(()=>URL.revokeObjectURL(url),1500);
+}
+$('restoreInput').addEventListener('change',e=>{
+  const f=e.target.files[0];
+  if(!f)return;
+  const r=new FileReader();
+  r.onload=()=>{
+    try{
+      const d=JSON.parse(r.result);
+      if(!d || !d.business || typeof d.business!=='object' || !Array.isArray(d.quotes) || !Array.isArray(d.clients) || !Array.isArray(d.catalog) || d.quotes.some(q=>!q || typeof q!=='object' || !Array.isArray(q.items))) throw Error('Formato');
+      const incomingCount=d.quotes.length+d.clients.length+d.catalog.length;
+      if(incomingCount===0){
+        notify('Respaldo vacío bloqueado. Tus datos actuales no se modificaron.');
+        return;
+      }
+      const currentCount=db.quotes.length+db.clients.length+db.catalog.length;
+      const message=`Vas a restaurar ${d.quotes.length} cotizaciones, ${d.clients.length} clientes y ${d.catalog.length} elementos de catálogo. Esto reemplazará los datos actuales (${currentCount} registros). Antes se descargará una copia de seguridad automática. ¿Deseas continuar?`;
+      if(!confirm(message))return;
+      const previous=db;
+      try{downloadJSONSnapshot(previous,'respaldo-automatico-antes-de-restaurar')}catch(err){notify('No se pudo crear la copia previa. La restauración se canceló y tus datos no cambiaron.');return}
+      db={...blank(),...d,business:{...blank().business,...d.business}};
+      ['clients','catalog','quotes','payments','invoices','adjustments'].forEach(k=>{if(!Array.isArray(db[k]))db[k]=[]});
+      if(!persist()){
+        db=previous;
+        notify('No se pudo guardar la restauración. Se conservaron los datos que estaban cargados.');
+        return;
+      }
+      renderDashboard();
+      renderHistory();
+      renderClients();
+      renderCatalog();
+      renderSettings();
+      notify('Respaldo restaurado. También se descargó una copia anterior.');
+    }catch(err){
+      notify('El archivo no parece ser un respaldo válido de CotizaFlash.');
+    }finally{
+      e.target.value='';
+    }
+  };
+  r.onerror=()=>{notify('No se pudo leer el archivo de respaldo.');e.target.value=''};
+  r.readAsText(f);
+});
+
+const CLOUD_KEY='cotizaflash_pro_cloud_v1', OWNER_KEY='cotizaflash_pro_owner_v1';
+let cloudClient=null, cloudReady=false, cloudTimer=0, cloudSaving=false;
+let cloudMeta={businessId:'',revision:0};
+const CLOUD_DEFAULT={url:'https://tjybwmmzfwbtwhwvohzj.supabase.co',anonKey:'sb_publishable_8mhuovDH0ssJCu0jlGSoQw_TYRsy1d2'};
+function readCloudConfig(){try{const c=JSON.parse(localStorage.getItem(CLOUD_KEY)||'null');if(c&&/^https:\/\//.test(c.url)&&c.anonKey)return c}catch(e){}return CLOUD_DEFAULT}
+function showGate(which){$('accessGate').classList.remove('hidden');$('app').classList.add('hidden');$('cloudSetup').classList.toggle('hidden',which!=='setup');$('loginForm').classList.toggle('hidden',which!=='login');const lic=$('licenseForm');if(lic)lic.classList.toggle('hidden',which!=='license')}
+function showLicenseWall(){cloudReady=false;clearTimeout(cloudTimer);showGate('license');accessNote('')}
+function accessNote(msg){const n=$('accessMessage');if(n)n.textContent=msg||''}
+function remoteHasData(payload){return !!(payload&&payload.business&&(Array.isArray(payload.quotes)||Array.isArray(payload.clients)||Array.isArray(payload.catalog)))}
+function applyPayload(payload){
+ cloudReady=false;
+ db={...blank(),...payload,business:{...blank().business,...(payload.business||{})}};
+ ['clients','catalog','quotes','payments','invoices','adjustments'].forEach(k=>{if(!Array.isArray(db[k]))db[k]=[]});
+ try{localStorage.setItem(KEY,JSON.stringify(db))}catch(e){}
+}
+function refreshApp(){renderSettings();resetQuoteForm();renderDashboard();renderHistory();renderClients();renderCatalog()}
+function scheduleCloudSave(){if(!cloudReady||!cloudClient||!cloudMeta.businessId)return;clearTimeout(cloudTimer);cloudTimer=setTimeout(pushCloud,700)}
+function licenseText(err){
+ const msg=String(err&&err.message||'');
+ if(msg.includes('license_suspended'))return 'Esta licencia está suspendida.';
+ if(msg.includes('Failed to fetch')||msg.includes('NetworkError')||msg.includes('network'))return 'No hay conexión con el servicio.';
+ return 'No se pudo abrir la cuenta. Revisa el correo, la contraseña y que el proyecto ya tenga la licencia activada.';
+}
+async function pushCloud(){
+ if(!cloudReady||cloudSaving||!cloudClient||!cloudMeta.businessId)return;
+ cloudSaving=true;
+ const sent=cloudMeta.revision;
+ const {data,error}=await cloudClient.rpc('save_workspace',{p_business_id:cloudMeta.businessId,p_payload:db,p_revision:sent});
+ cloudSaving=false;
+ if(error){
+  const msg=String(error.message||'');
+  if(msg.includes('version_conflict')){await pullCloud();refreshApp();notify('Otro dispositivo guardó primero. Se cargó esa versión.');return}
+  if(msg.includes('license_suspended')){showLicenseWall();return}
+  notify('No se pudo guardar en la cuenta. La copia de este aparato sigue aquí.');
+  return;
+ }
+ cloudMeta.revision=Number(data)||cloudMeta.revision;
+}
+async function pullCloud(){
+ const name=(($('loginBusiness')&&$('loginBusiness').value)||'').trim()||'Mi negocio';
+ const {data,error}=await cloudClient.rpc('open_account',{p_name:name});
+ if(error)throw error;
+ cloudMeta.businessId=data.business_id;
+ cloudMeta.revision=Number(data.revision)||1;
+ if(remoteHasData(data.payload))applyPayload(data.payload);
+ return data;
+}
+async function enterApp(email){
+ const pack=await pullCloud();
+ if(pack.access==='blocked'){showLicenseWall();return}
+ const owner=localStorage.getItem(OWNER_KEY)||'';
+ const localCount=db.quotes.length+db.clients.length+db.catalog.length;
+ if(remoteHasData(pack.payload))localStorage.setItem(OWNER_KEY,email);
+ else if(!owner||owner===email){
+  localStorage.setItem(OWNER_KEY,email);
+  cloudReady=true;
+  if(localCount>0)await pushCloud();
+ }else{
+  applyPayload(blank());
+  localStorage.setItem(OWNER_KEY,email);
+  cloudReady=true;
+  await pushCloud();
+ }
+ cloudReady=true;
+ $('accessGate').classList.add('hidden');
+ $('app').classList.remove('hidden');
+ const until=pack.access==='trial'&&pack.trial_ends_at?('Prueba hasta '+String(pack.trial_ends_at).slice(0,10)):(pack.paid_until?('Activa hasta '+String(pack.paid_until).slice(0,10)):'Cuenta activa');
+ $('sessionLabel').textContent=(email?email+' · ':'')+until;
+ refreshApp();
+}
+async function bootAccess(){
+ const config=readCloudConfig();
+ if(!config||!window.supabase||!window.supabase.createClient){showGate('setup');if(!window.supabase)accessNote('No se pudo cargar el acceso. Revisa internet y vuelve a abrir la página.');return}
+ cloudClient=window.supabase.createClient(config.url,config.anonKey,{auth:{persistSession:true,autoRefreshToken:true}});
+ showGate('login');
+ const {data}=await cloudClient.auth.getSession();
+ if(data&&data.session&&data.session.user){
+  try{await enterApp(data.session.user.email||'')}
+  catch(err){accessNote(licenseText(err))}
+ }
+}
+$('cloudSetup').addEventListener('submit',e=>{
+ e.preventDefault();
+ const url=$('cloudUrl').value.trim().replace(/\/$/,'');
+ const anonKey=$('cloudKey').value.trim();
+ if(!/^https:\/\/[a-z0-9-]+\.supabase\.co$/i.test(url)||anonKey.length<20||/service_role/i.test(anonKey)){accessNote('Usa la dirección del proyecto y solo la clave pública anon.');return}
+ localStorage.setItem(CLOUD_KEY,JSON.stringify({url,anonKey}));
+ bootAccess();
+});
+$('cloudChange').addEventListener('click',()=>{showGate('setup');accessNote('')});
+$('loginForm').addEventListener('submit',async e=>{
+ e.preventDefault();
+ accessNote('Entrando…');
+ const email=$('loginEmail').value.trim();
+ const {data,error}=await cloudClient.auth.signInWithPassword({email,password:$('loginPassword').value});
+ if(error||!data.session){accessNote('Correo o contraseña no válidos, o la cuenta todavía espera el correo de confirmación.');return}
+ try{await enterApp(email)}catch(err){accessNote(licenseText(err))}
+});
+$('loginCreate').addEventListener('click',async()=>{
+ const email=$('loginEmail').value.trim();
+ const password=$('loginPassword').value;
+ const business=($('loginBusiness').value||'').trim();
+ if(!email||password.length<8||!business){accessNote('Para crear la cuenta escribe correo, una contraseña de 8 caracteres y el nombre del negocio.');return}
+ accessNote('Creando la cuenta…');
+ const {data,error}=await cloudClient.auth.signUp({email,password,options:{data:{display_name:business}}});
+ if(error){accessNote('No se pudo crear la cuenta. Si ese correo ya existe, entra con él.');return}
+ if(!data.session){accessNote('Cuenta creada. Abre el correo de confirmación y después pulsa Entrar.');return}
+ try{await enterApp(email)}catch(err){accessNote(licenseText(err))}
+});
+$('licenseForm').addEventListener('submit',async e=>{
+ e.preventDefault();
+ const code=$('licenseCode').value.trim();
+ if(!code){accessNote('Escribe el código de acceso.');return}
+ accessNote('Activando…');
+ const {error}=await cloudClient.rpc('redeem_license_code',{p_code:code});
+ if(error){accessNote('Ese código no sirve o ya se usó.');return}
+ const {data}=await cloudClient.auth.getSession();
+ try{await enterApp(data&&data.session&&data.session.user?data.session.user.email||'':'')}catch(err){accessNote(licenseText(err))}
+});
+$('licenseSignOut').addEventListener('click',async()=>{
+ cloudReady=false;
+ clearTimeout(cloudTimer);
+ if(cloudClient)await cloudClient.auth.signOut();
+ showGate('login');
+ accessNote('Sesión cerrada en este aparato.');
+});
+$('signOut').addEventListener('click',async()=>{
+ cloudReady=false;
+ clearTimeout(cloudTimer);
+ if(cloudClient)await cloudClient.auth.signOut();
+ showGate('login');
+ accessNote('Sesión cerrada en este aparato. La cuenta y la licencia siguen en el servicio.');
+});
+bootAccess();
+})();
+</script>
+</body>
+</html>
