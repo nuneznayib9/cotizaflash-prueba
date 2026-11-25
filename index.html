@@ -76,9 +76,9 @@ td{padding:11px 9px;border-top:1px solid #edf1f6;font-size:13px;vertical-align:m
 }
 @media print{
  @page{size:A4;margin:14mm}
- body{background:#fff!important;color:#111827!important}
- .no-print{display:none!important}
- #printDocument{display:block!important}
+ html,body{background:#fff!important;color:#111827!important;overflow:visible!important;height:auto!important;max-height:none!important}
+ #accessGate,#app,#toast{display:none!important}
+ #printDocument{display:block!important;position:static!important;width:auto!important;height:auto!important;overflow:visible!important}
  #printDocument .paper{box-shadow:none!important;border:0!important;border-radius:0!important;max-width:none!important;padding:0!important}
  #printDocument table{break-inside:auto}
  #printDocument thead{display:table-header-group}
@@ -104,7 +104,7 @@ td{padding:11px 9px;border-top:1px solid #edf1f6;font-size:13px;vertical-align:m
   </form>
   <form id="loginForm" class="card hidden space-y-3 p-5">
    <h1 class="text-lg font-black">Probar CotizaFlash</h1>
-   <p class="text-sm text-slate-500">La prueba dura 2 días y no pide correo. El código la abre cuando esos días terminan.</p>
+   <p class="text-sm text-slate-500">La prueba dura 2 días y no pide correo. Al comprar, esa misma prueba pasa a ser su cuenta: su correo, su clave y el código.</p>
    <button class="btn primary w-full" type="button" id="trialEnter">Probar 2 días sin correo</button>
    <label><span class="label">Correo</span><input id="loginEmail" class="field" type="email" autocomplete="username"></label>
    <label><span class="label">Contraseña</span><input id="loginPassword" class="field" type="password" autocomplete="current-password" minlength="8"></label>
@@ -114,10 +114,12 @@ td{padding:11px 9px;border-top:1px solid #edf1f6;font-size:13px;vertical-align:m
    <button class="btn soft w-full" type="button" id="cloudChange">Cambiar la conexión del servicio</button>
   </form>
   <form id="licenseForm" class="card hidden space-y-3 p-5">
-   <h1 class="text-lg font-black">Cuenta bloqueada</h1>
-   <p id="licenseExplain" class="text-sm text-slate-500">La prueba o el periodo pagado terminó. El código de acceso abre la cuenta en el teléfono, la tablet y el computador.</p>
-   <label><span class="label">Código de acceso</span><input id="licenseCode" class="field" autocomplete="off" placeholder="CF-0000-0000" required></label>
-   <button class="btn primary w-full" type="submit">Activar licencia</button>
+   <h1 class="text-lg font-black">La prueba terminó</h1>
+   <p id="licenseExplain" class="text-sm text-slate-500">Al comprar se crea su cuenta con su correo y su clave. El código de la compra abre los datos de la prueba en el teléfono, la tablet y el computador.</p>
+   <label><span class="label">Correo</span><input id="paidEmail" class="field" type="email" autocomplete="username"></label>
+   <label><span class="label">Clave de seguridad</span><input id="paidPassword" class="field" type="password" autocomplete="new-password" minlength="8" placeholder="Mínimo 8 caracteres"></label>
+   <label><span class="label">Código de la compra</span><input id="licenseCode" class="field" autocomplete="off" placeholder="CF-0000-0000" required></label>
+   <button class="btn primary w-full" type="submit">Crear cuenta y abrir</button>
    <button class="btn soft w-full" type="button" id="licenseSignOut">Salir</button>
   </form>
   <p id="accessMessage" class="mt-4 text-sm font-semibold text-slate-600"></p>
@@ -225,7 +227,7 @@ td{padding:11px 9px;border-top:1px solid #edf1f6;font-size:13px;vertical-align:m
      <button id="shareQuote" class="btn green w-full" type="button">Compartir por WhatsApp</button>
      <button id="clearQuote" class="btn danger w-full" type="button">Limpiar formulario</button>
     </div>
-    <p class="mt-3 text-[11px] leading-relaxed text-slate-400">El PDF se genera mediante la opción “Guardar como PDF” del navegador.</p>
+    <p class="mt-3 text-[11px] leading-relaxed text-slate-400">En el computador elige Guardar como PDF. En el celular se abre la hoja del sistema para imprimir o guardar el PDF.</p>
    </div>
   </aside>
  </form>
@@ -369,6 +371,7 @@ td{padding:11px 9px;border-top:1px solid #edf1f6;font-size:13px;vertical-align:m
  <div class="card p-4 sm:p-5"><h2 class="font-extrabold">Copia de seguridad</h2><p class="mt-1 text-sm text-slate-500">La cuenta guarda el negocio en el servicio. Este respaldo es una copia privada por si quieres guardarla aparte.</p><p class="mt-2 text-xs leading-relaxed text-slate-500">Cada comprador entra con su correo. La licencia activa es la que abre esos datos en cualquier aparato. Un correo distinto no ve el negocio de otro.</p><div class="mt-3 flex flex-wrap gap-2"><button id="backupBtn" class="btn primary" type="button">⇩ Descargar respaldo JSON</button><label class="btn soft cursor-pointer">⇧ Restaurar respaldo<input id="restoreInput" type="file" accept="application/json,.json" class="hidden"></label><button id="emptyBase" class="btn danger" type="button">Vaciar datos de prueba</button></div><p class="mt-2 text-xs leading-relaxed text-slate-500">Vaciar deja este equipo sin clientes, cotizaciones, catálogo ni datos del negocio. Quien compre la aplicación llena sus propios productos, precios, cantidades y las personas a las que cotiza.</p></div>
 </section>
 </main>
+</div>
 
 <!-- PRINT DOCUMENT -->
 <div id="printDocument">
@@ -695,10 +698,13 @@ function printData(q){
  $('pRows').innerHTML=q.items.map((x,i)=>`<tr><td>${esc(x.desc)}</td><td class="text-right">${esc(x.qty)}</td><td class="text-right">${money(x.price)}</td><td class="text-right font-semibold">${formatMinor(t.lines[i])}</td></tr>`).join('');
  $('pSubtotal').textContent=formatMinor(t.sub);$('pDiscount').textContent='− '+formatMinor(t.disc);$('pTaxLabel').textContent=taxTitle(q.tax,q.taxName);$('pTax').textContent=formatMinor(t.tax);$('pTotal').textContent=formatMinor(t.total);
  $('pPaymentLine').textContent=q.payment?'Forma de pago: '+q.payment:'';$('pDeliveryLine').textContent=q.delivery?'Tiempo de entrega: '+q.delivery:'';$('pNotesLine').textContent=q.notes?'Observaciones: '+q.notes:'';
- $('printDocument').style.display='block';
- const hide=()=>{$('printDocument').style.display='none';window.removeEventListener('afterprint',hide)};
+ const doc=$('printDocument');
+ doc.style.display='block';
+ const hide=()=>{doc.style.display='none';window.removeEventListener('afterprint',hide)};
  window.addEventListener('afterprint',hide);
+ if(typeof window.print!=='function'){hide();notify('Este navegador no abre la impresión. Usa el menú del celular y elige Imprimir o Compartir como PDF.');return}
  window.print();
+ setTimeout(hide,2000);
 }
 $('printQuote').addEventListener('click',()=>{const q=currentQuote();if(validateQuote(q))printData(q)});
 function shareQuote(q){const t=quoteMath(q);if(t.overflow){notify('Hay un importe demasiado grande para compartirlo con seguridad.');return}const b=db.business;const msg=[`*COTIZACIÓN ${q.code}*`,`*${b.name||'Mi negocio'}*`,b.phone?'Teléfono: '+b.phone:'',`Cliente: ${q.client}`,q.taxId?'Identificación: '+q.taxId:'',q.address?'Dirección: '+q.address:'',`Fecha: ${q.date||'—'}`,q.valid?'Válida hasta: '+q.valid:'','','*DETALLE*',...q.items.map((x,i)=>`${i+1}. ${x.desc} | ${x.qty} x ${money(x.price)} = ${formatMinor(t.lines[i])}`),'',`Subtotal: ${formatMinor(t.sub)}`,`Descuento: ${formatMinor(t.disc)}`,`${taxTitle(q.tax,q.taxName)}: ${formatMinor(t.tax)}`,`*TOTAL: ${formatMinor(t.total)}*`,q.payment?'Forma de pago: '+q.payment:'',q.delivery?'Entrega: '+q.delivery:'',q.notes?'Observaciones: '+q.notes:'','', 'Gracias por tu preferencia.'].filter(Boolean).join('\n');const url='https://wa.me/?text='+encodeURIComponent(msg);const popup=window.open(url,'_blank','noopener,noreferrer');if(!popup){const a=document.createElement('a');a.href=url;a.target='_blank';a.rel='noopener noreferrer';document.body.appendChild(a);a.click();a.remove()}}
@@ -1413,13 +1419,22 @@ $('loginCreate').addEventListener('click',async()=>{
 });
 $('licenseForm').addEventListener('submit',async e=>{
  e.preventDefault();
+ const email=$('paidEmail').value.trim();
+ const password=$('paidPassword').value;
  const code=$('licenseCode').value.trim();
- if(!code){accessNote('Escribe el código de acceso.');return}
- accessNote('Activando…');
+ if(!code){accessNote('Escribe el código de la compra.');return}
+ accessNote('Creando la cuenta…');
+ const session=await cloudClient.auth.getSession();
+ const user=session.data&&session.data.session&&session.data.session.user;
+ const anonymous=user&&(user.is_anonymous||!user.email);
+ if(anonymous){
+  if(!email||password.length<8){accessNote('Escribe su correo y una clave de al menos 8 caracteres.');return}
+  const updated=await cloudClient.auth.updateUser({email,password});
+  if(updated.error){accessNote(/already/i.test(updated.error.message)?'Ese correo ya tiene otra cuenta.':'No se pudo crear la cuenta. Revisa el correo y la clave.');return}
+ }
  const {error}=await cloudClient.rpc('redeem_license_code',{p_code:code});
  if(error){accessNote('Ese código no sirve o ya se usó.');return}
- const {data}=await cloudClient.auth.getSession();
- try{await enterApp(data&&data.session&&data.session.user?data.session.user.email||'':'')}catch(err){accessNote(licenseText(err))}
+ try{await enterApp(email||(user&&user.email)||'')}catch(err){accessNote(licenseText(err))}
 });
 $('licenseSignOut').addEventListener('click',async()=>{
  cloudReady=false;
